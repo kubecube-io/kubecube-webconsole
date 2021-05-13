@@ -1,9 +1,26 @@
+/*
+Copyright 2021 KubeCube Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package handler
 
 import (
 	"context"
 	logger "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
+	"github.com/kubecube-io/kubecube/pkg/clients"
 	v1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,13 +31,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-// podAuthorityVerify verify whether current account could access to pod
+// podAuthorityVerify verify whether current user could access to pod
 func PodAuthorityVerify(request *restful.Request, response *restful.Response, chain *restful.FilterChain) {
 	logger.Info("request path parameters: %v", request.PathParameters())
 
-	// 鉴权分两步：
-	// 1. 判断用户是否有权限操作该namespace下的pod
-	// 2. 判断操作的pod是否是属于传入的namespace
+	// two steps：
+	// 1. determine whether the user has permission to operate the pod under the namespace
+	// 2. determine whether the operated pod belongs to the namespace
 	if !isAuthValid(request) {
 		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
 		return
@@ -32,7 +49,7 @@ func PodAuthorityVerify(request *restful.Request, response *restful.Response, ch
 	}
 }
 
-// 判断用户是否有权限操作该namespace下的pod
+// determine whether the user has permission to operate the pod under the namespace
 func isAuthValid(request *restful.Request) bool {
 	user := utils.GetUserFromReq(request)
 	if user == "" {
@@ -69,12 +86,13 @@ func makeSubjectAccessReview(user, namespace string) v1.SubjectAccessReview {
 	}
 }
 
-// 判断操作的pod是否是属于传入的namespace
+// determine whether the operated pod belongs to the namespace
 func isNsOrPodBelongToNamespace(request *restful.Request) bool {
 	podName := request.PathParameter("pod")
 	namespace := request.PathParameter("namespace")
+	clusterName := request.PathParameter("cluster")
 	var (
-		client = K8sClient
+		client = clients.Interface().Kubernetes(clusterName)
 		ctx    = context.Background()
 		pod    = corev1.Pod{}
 	)

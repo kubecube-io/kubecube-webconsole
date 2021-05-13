@@ -1,10 +1,26 @@
+/*
+Copyright 2021 KubeCube Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package handler
 
 import (
 	"context"
 	logger "github.com/astaxie/beego/logs"
 	clusterv1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
-	"github.com/kubecube-io/kubecube/pkg/multicluster"
+	"github.com/kubecube-io/kubecube/pkg/clients"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -13,7 +29,7 @@ func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, e
 		return nil, nil
 	}
 	var (
-		client  = K8sClient
+		client  = clients.Interface().Kubernetes(clusterName)
 		ctx     = context.Background()
 		cluster = clusterv1.Cluster{}
 	)
@@ -24,22 +40,4 @@ func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, e
 		return nil, err
 	}
 	return &cluster, nil
-
-}
-
-/**
-  管控集群理论上只有一个，只返回第一个
-*/
-func GetControlClusterInfo() (clusterInfo []*clusterv1.Cluster, err error) {
-	var controlClusters []*clusterv1.Cluster
-	clusters := multicluster.Interface().FuzzyCopy()
-	for _, fuzzyCluster := range clusters {
-		cluster, err := GetClusterInfoByName(fuzzyCluster.Name)
-		if cluster != nil && err != nil {
-			if cluster.Spec.IsMemberCluster {
-				controlClusters = append(controlClusters, cluster)
-			}
-		}
-	}
-	return controlClusters, nil
 }

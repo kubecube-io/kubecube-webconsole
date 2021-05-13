@@ -13,15 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package handler
 
-import (
-	"github.com/patrickmn/go-cache"
-	"time"
-)
+package constants
 
-func initConfig() {
-	CloudShellDpName = *cloudShellDpName
-	CloudShellNs = *appNamespace
-	configMap = cache.New(5*time.Minute, 5*time.Minute)
-}
+const ControlClusterName = "pivot-cluster"

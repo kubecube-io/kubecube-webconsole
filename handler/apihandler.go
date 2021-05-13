@@ -1,3 +1,19 @@
+/*
+Copyright 2021 KubeCube Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package handler
 
 import (
@@ -40,7 +56,6 @@ func CreateHTTPAPIHandler() http.Handler {
 		Produces(restful.MIME_JSON)
 
 	apiV2Ws := new(restful.WebService)
-	//apiV2Ws.Filter(adminAuthorityVerify) // 放开，普通用户可访问
 
 	apiV2Ws.Path("/api/v1/extends").
 		Consumes(restful.MIME_JSON).
@@ -49,6 +64,10 @@ func CreateHTTPAPIHandler() http.Handler {
 	wsContainer.Add(apiV1Ws)
 	wsContainer.Add(apiV2Ws)
 
+	apiV1Ws.Route(
+		apiV1Ws.GET("{cluster}/namespace/{namespace}/pod/{pod}/shell/{container}").
+			To(handleExecShell).
+			Writes(TerminalResponse{}))
 	apiV1Ws.Route(
 		apiV1Ws.GET("{cluster}/pod/{namespace}/{pod}/shell/{container}").
 			To(handleExecShell).
@@ -69,7 +88,6 @@ func CreateAttachHandler(path string) http.Handler {
 
 // Handles execute shell API call
 func handleExecShell(request *restful.Request, response *restful.Response) {
-	name := request.PathParameter("cluster")
 
 	sessionId, err := utils.GenTerminalSessionId()
 	if err != nil {
@@ -79,33 +97,30 @@ func handleExecShell(request *restful.Request, response *restful.Response) {
 	}
 	logger.Info("sessionId: %s", sessionId)
 
-	// 根据集群名从map中获取相应的restClient配置
-	_, err = getNonControlCfgFromCacheAndDbIfCacheFail(name)
+	clusterName := request.PathParameter("cluster")
+
+	// get restClient from map base on clusterName
+	_, err = getNonControlCfg(clusterName)
 	if err != nil {
-		// 如果获取不到配置，可能是动态增加的一个新集群信息，需要重新获取
-		logger.Error("fail to fetch rest.config for cluster [%s], msg: %v", name, err)
+		logger.Error("fail to fetch rest.config for cluster [%s], msg: %v", clusterName, err)
 		errdef.HandleInternalErrorByCode(response, errdef.ClusterInfoNotFound)
 		return
 	}
 
 	cInfo := getConnInfo(request)
-	C.Set(sessionId, cInfo, KeyExpiredSeconds)
+	cacheConnInfo(sessionId, cInfo)
 
 	response.WriteHeaderAndEntity(http.StatusOK, TerminalResponse{Id: sessionId})
 }
 
 func cacheConnInfo(sessionId string, info *ConnInfo) {
 	v, _ := json.Marshal(info)
-
 	// save container-connect info to sync.Map
 	connMap.Store(sessionId, string(v))
-	// save container info to cache with an expire time
-	C.Set(sessionId, v, KeyExpiredSeconds)
 }
 
-//todo
 func getConnInfo(request *restful.Request) *ConnInfo {
-	tenantId := request.PathParameter("tenantId")
+	user := utils.GetUserFromReq(request)
 	clusterName := request.PathParameter("cluster")
 	namespace := request.PathParameter("namespace")
 	podName := request.PathParameter("pod")
@@ -114,14 +129,6 @@ func getConnInfo(request *restful.Request) *ConnInfo {
 	scriptUser := request.QueryParameter("user")
 	scriptUID := request.QueryParameter("uid")
 	scriptUserAuth := request.QueryParameter("auth")
-
-	// Audit related info
-	webUser := request.QueryParameter("webuser")
-	platform := request.QueryParameter("platform")
-	// 未传入platform信息时，认为是轻舟页面传入的
-	if platform == "" {
-		platform = PlatformSkiff
-	}
 
 	remoteIP := request.QueryParameter("remote_ip")
 	if remoteIP == "" {
@@ -134,7 +141,7 @@ func getConnInfo(request *restful.Request) *ConnInfo {
 	}
 
 	return &ConnInfo{
-		TenantId:       tenantId,
+		UserName:       user,
 		Namespace:      namespace,
 		PodName:        podName,
 		ContainerName:  containerName,
@@ -142,16 +149,10 @@ func getConnInfo(request *restful.Request) *ConnInfo {
 		ScriptUID:      scriptUID,
 		ScriptUser:     scriptUser,
 		ScriptUserAuth: scriptUserAuth,
-		AuditRawInfo: &AuditRawInfo{
-			RemoteIP:  remoteIP,
-			UserAgent: ua,
-			WebUser:   webUser,
-			Platform:  platform,
-		},
 	}
 }
 
-// 通过kubeconfig文件内容初始化rest.Config
+// init rest.Config base on kubeconfig
 func initKubeConf(kubeConfData string) *rest.Config {
 	var err error
 	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConfData))
@@ -170,25 +171,23 @@ func initKubeConf(kubeConfData string) *rest.Config {
 	return cfg
 }
 
-/**
-  从cache中根据集群名字获取cfg，cache可能失效，则尝试从数据库获取并且更新cache
-*/
-func getNonControlCfgFromCacheAndDbIfCacheFail(clusterName string) (cfg *rest.Config, err error) {
+// get cfg from cache, if it is not in the cache, get it from K8s and update cache
+func getNonControlCfg(clusterName string) (cfg *rest.Config, err error) {
 	v, ok := configMap.Get(clusterName)
 	if ok {
 		return v.(*rest.Config), nil
 	}
-	// 按照正常方式从数据库表中获取
-	logger.Info("cluster [%s] config expire ot not exist in cache, try to fetch in db", clusterName)
+	// get cfg from k8s
+	logger.Info("cluster [%s] config expire ot not exist in cache, try to fetch from K8s", clusterName)
 	ci, err := GetClusterInfoByName(clusterName)
 	if err != nil {
 		return nil, err
 	}
 	data := string(ci.Spec.KubeConfig)
-	// 初始化restClient的配置，存入map中
+	// init rest client config, put it to cache
 	NCfg := initKubeConf(data)
 	if NCfg != nil {
-		logger.Info("init rest client for cluster [%s] from config from db success", clusterName)
+		logger.Info("init rest client for cluster [%s] from config from K8s success", clusterName)
 		configMap.Set(clusterName, NCfg, cache.DefaultExpiration)
 	} else {
 		msg := fmt.Sprintf("init rest client for cluster [%s] from config from db Fail, config data: %v", clusterName, data)
