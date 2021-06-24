@@ -18,34 +18,49 @@ package handler
 
 import (
 	"context"
-	logger "github.com/astaxie/beego/logs"
+	"crypto/tls"
+	"encoding/json"
+	clog "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
 	"github.com/kubecube-io/kubecube/pkg/clients"
-	v1 "k8s.io/api/authorization/v1"
+	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 	"kubecube-webconsole/utils"
 	"net/http"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"strings"
+	"time"
 )
+
+type attributes struct {
+	User            string `json:"user"`
+	Verb            string `json:"verb"`
+	Namespace       string `json:"namespace"`
+	APIGroup        string `json:"apiGroup"`
+	APIVersion      string `json:"apiVersion"`
+	Resource        string `json:"resource"`
+	Subresource     string `json:"subresource"`
+	Name            string `json:"name"`
+	ResourceRequest bool   `json:"resourceRequest"`
+	Path            string `json:"path"`
+}
 
 // podAuthorityVerify verify whether current user could access to pod
 func PodAuthorityVerify(request *restful.Request, response *restful.Response, chain *restful.FilterChain) {
-	logger.Info("request path parameters: %v", request.PathParameters())
+	clog.Info("request path parameters: %v", request.PathParameters())
 
 	// two steps：
 	// 1. determine whether the user has permission to operate the pod under the namespace
 	// 2. determine whether the operated pod belongs to the namespace
 	if !isAuthValid(request) {
+		clog.Info("user has no permission to operate the pod or the pod does not belong to the namespace")
 		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
 		return
 	}
 	if isNsOrPodBelongToNamespace(request) {
 		chain.ProcessFilter(request, response)
 	} else {
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
+		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "the pod is not found"})
 	}
 }
 
@@ -53,37 +68,34 @@ func PodAuthorityVerify(request *restful.Request, response *restful.Response, ch
 func isAuthValid(request *restful.Request) bool {
 	user := utils.GetUserFromReq(request)
 	if user == "" {
+		clog.Error("the user is not exists")
 		return false
 	}
 	namespace := request.PathParameter(NamespaceKey)
-	accessReview := makeSubjectAccessReview(user, namespace)
-	client, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
+	attribute := &attributes{user, "get", namespace, "", "", "pods",
+		"", "", true, ""}
+	bytesData, err := json.Marshal(attribute)
 	if err != nil {
-		logger.Error("problem new raw k8s clientSet: %v", err)
+		clog.Error("marshal json error: %s", err)
 		return false
 	}
-	r, err := client.AuthorizationV1().SubjectAccessReviews().Create(context.Background(), &accessReview, metav1.CreateOptions{})
-	if err != nil {
-		logger.Error("%v", err)
+	// skip tsl verify
+	c := &http.Client{
+		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
+		Timeout:   5 * time.Second,
+	}
+	resp, _ := c.Post("https://"+utils.GetKubeCubeSvc()+"/api/v1/cube/authorization/access",
+		"application/x-www-form-urlencoded", strings.NewReader(string(bytesData)))
+	if resp == nil {
+		clog.Error("request to kubecube for auth failed, response is nil")
 		return false
 	}
-	return r.Status.Allowed
-
-}
-
-// makeSubjectAccessReview consider user has visible view of given namespace
-// if user can get pods in that namespace.
-func makeSubjectAccessReview(user, namespace string) v1.SubjectAccessReview {
-	return v1.SubjectAccessReview{
-		Spec: v1.SubjectAccessReviewSpec{
-			User: user,
-			ResourceAttributes: &v1.ResourceAttributes{
-				Name:      "pods",
-				Namespace: namespace,
-				Verb:      "get, list, watch",
-			},
-		},
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	if string(body) == "true" {
+		return true
 	}
+	return false
 }
 
 // determine whether the operated pod belongs to the namespace
@@ -99,7 +111,7 @@ func isNsOrPodBelongToNamespace(request *restful.Request) bool {
 	key := types.NamespacedName{Namespace: namespace, Name: podName}
 	err := client.Cache().Get(ctx, key, &pod)
 	if err != nil {
-		logger.Error("get pod failed: %v", err)
+		clog.Error("get pod failed: %v", err)
 		return false
 	}
 	if len(pod.Name) > 0 {

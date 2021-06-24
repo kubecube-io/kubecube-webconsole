@@ -18,7 +18,7 @@ package handler
 
 import (
 	"context"
-	logger "github.com/astaxie/beego/logs"
+	clog "github.com/astaxie/beego/logs"
 	clusterv1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
 	"github.com/kubecube-io/kubecube/pkg/clients"
 	"k8s.io/apimachinery/pkg/types"
@@ -36,7 +36,7 @@ func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, e
 	key := types.NamespacedName{Name: clusterName}
 	err = client.Cache().Get(ctx, key, &cluster)
 	if err != nil {
-		logger.Error("get cluster failed: %v", err)
+		clog.Error("get cluster failed: %v", err)
 		return nil, err
 	}
 	return &cluster, nil

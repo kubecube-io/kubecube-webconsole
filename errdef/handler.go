@@ -38,7 +38,7 @@ func HandleInternalError(response *restful.Response, err error) {
 	response.WriteErrorString(statusCode, err.Error()+"\n")
 }
 
-func HandleInternalErrorByCode(response *restful.Response, errCode errorInfo) {
+func HandleInternalErrorByCode(response *restful.Response, errCode ErrorInfo) {
 	logger.Error(errCode)
 	response.AddHeader("Content-Type", "text/plain")
 	msg, _ := json.Marshal(errCode)

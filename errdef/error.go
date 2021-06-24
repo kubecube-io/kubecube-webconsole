@@ -24,20 +24,21 @@ import (
 	logger "github.com/astaxie/beego/logs"
 )
 
-type errorInfo struct {
+type ErrorInfo struct {
 	Code      int    `json:"Code"`
 	ErrorCode string `json:"ErrorCode"`
 	Msg       string `json:"Message"`
 }
 
 var (
-	ClusterInfoNotFound    = errorInfo{http.StatusInternalServerError, "ClusterInfoNotFound", "Cluster not found"}
-	InternalServerError    = errorInfo{http.StatusInternalServerError, "InternalServerError", "Internal server error"}
-	NoRunningPod           = errorInfo{http.StatusInternalServerError, "NoRunningPod", "No running pod available"}
-	ControlClusterNotFound = errorInfo{http.StatusInternalServerError, "ControlClusterNotFound", "Control cluster not found"}
+	ClusterInfoNotFound    = ErrorInfo{http.StatusInternalServerError, "ClusterInfoNotFound", "Cluster not found."}
+	InternalServerError    = ErrorInfo{http.StatusInternalServerError, "InternalServerError", "Internal server error."}
+	NoRunningPod           = ErrorInfo{http.StatusInternalServerError, "NoRunningPod", "No running pod available."}
+	ControlClusterNotFound = ErrorInfo{http.StatusInternalServerError, "ControlClusterNotFound", "Control cluster not found."}
+	InvalidToken           = &ErrorInfo{http.StatusUnauthorized, "InvalidToken", "Token invalid."}
 )
 
-func (ei errorInfo) WithMarshal() []byte {
+func (ei ErrorInfo) WithMarshal() []byte {
 	res, err := json.Marshal(ei)
 	if err != nil {
 		logger.Error("Json marshal failed, %s", err.Error())
@@ -45,6 +46,6 @@ func (ei errorInfo) WithMarshal() []byte {
 	return res
 }
 
-func (ei errorInfo) Error() string {
+func (ei ErrorInfo) Error() string {
 	return fmt.Sprintf("errorCode: %d, errorMsg %s", ei.Code, ei.Msg)
 }

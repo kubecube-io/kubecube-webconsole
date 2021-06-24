@@ -27,7 +27,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	logger "github.com/astaxie/beego/logs"
+	clog "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
 	"github.com/patrickmn/go-cache"
 	v12 "k8s.io/api/core/v1"
@@ -57,7 +57,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	if !ok {
 		NCfg, err := getControlCluster()
 		if err != nil {
-			logger.Error("fail to fetch control cluster, msg: %v", err)
+			clog.Error("fail to fetch control cluster, msg: %v", err)
 			errdef.HandleInternalErrorByCode(response, errdef.ControlClusterNotFound)
 			return
 		}
@@ -70,7 +70,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	controlRestClient, err := rest.RESTClientFor(cfg)
 
 	if err != nil {
-		logger.Info("Fail to new rest client from control pane cluster kube config data, from cfg: %#v", cfg)
+		clog.Info("Fail to new rest client from control pane cluster kube config data, from cfg: %#v", cfg)
 		errdef.HandleInternalErrorByCode(response, errdef.InternalServerError)
 		return
 	}
@@ -78,12 +78,12 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	pods := v12.PodList{}
 	err = controlRestClient.Get().Resource("pods").Namespace(CloudShellNs).Param("labelSelector", CloudShellLabelKey+"="+CloudShellDpName).Do(context.Background()).Into(&pods)
 	if err != nil {
-		logger.Info("Fetch pods of cloud shell fail, err msg: %v", err)
+		clog.Info("Fetch pods of cloud shell fail, err msg: %v", err)
 		errdef.HandleInternalError(response, errdef.InternalServerError)
 		return
 	}
 	if len(pods.Items) == 0 {
-		logger.Info("No pods of cloud shell available, err msg: %v", err)
+		clog.Info("No pods of cloud shell available, err msg: %v", err)
 		errdef.HandleInternalError(response, errdef.InternalServerError)
 		return
 	}
@@ -91,7 +91,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	// choose one pod in running status randomly
 	runningPod := fetchRandomRunningPod(pods.Items)
 	if runningPod == nil {
-		logger.Info("No running pod of cloud shell available!")
+		clog.Info("No running pod of cloud shell available!")
 		errdef.HandleInternalError(response, errdef.NoRunningPod)
 		return
 	}
@@ -113,11 +113,11 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 
 	sessionId, err := utils.GenTerminalSessionId()
 	if err != nil {
-		logger.Error("Generate session id failed. Error msg: " + err.Error())
+		clog.Error("Generate session id failed. Error msg: " + err.Error())
 		errdef.HandleInternalError(response, err)
 		return
 	}
-	logger.Info("SessionId: %s", sessionId)
+	clog.Info("SessionId: %s", sessionId)
 
 	// save container-connect info to memory
 	connMap.Store(sessionId, string(connInfoBytes))
@@ -158,19 +158,19 @@ func isPodRunning(pod v12.Pod) bool {
 func getControlCluster() (cfg *rest.Config, err error) {
 	controlCluster, err := GetClusterInfoByName(constants.ControlClusterName)
 	if err != nil {
-		logger.Error("get control cluster err")
+		clog.Error("get control cluster err")
 		return nil, errdef.ControlClusterNotFound
 	}
 
 	tmpCfg := initKubeConf(string(controlCluster.Spec.KubeConfig))
 	if tmpCfg == nil {
-		logger.Info("fail to init cfg for control cluster [%s], config: %v", controlCluster.ClusterName, string(controlCluster.Spec.KubeConfig))
+		clog.Info("fail to init cfg for control cluster [%s], config: %v", controlCluster.ClusterName, string(controlCluster.Spec.KubeConfig))
 	}
 
 	controlRestClient, err := rest.RESTClientFor(tmpCfg)
 	if err != nil {
 		msg := fmt.Sprintf("Fail to new rest client from control cluster [%s] with  kube config data, from cfg: %#v", controlCluster.ClusterName, tmpCfg)
-		logger.Info(msg)
+		clog.Info(msg)
 		return nil, errors.New(msg)
 	}
 
@@ -178,13 +178,13 @@ func getControlCluster() (cfg *rest.Config, err error) {
 	err = controlRestClient.Get().Resource("pods").Namespace(CloudShellNs).Param("labelSelector", CloudShellLabelKey+"="+CloudShellDpName).Do(context.Background()).Into(&pods)
 	if err != nil {
 		msg := fmt.Sprintf("Fetch pods of cloud shell fail in control cluster [%s] fail, err msg: %v", controlCluster.ClusterName, err)
-		logger.Info(msg)
+		clog.Info(msg)
 		return nil, errors.New(msg)
 	}
 
 	if len(pods.Items) == 0 {
 		msg := fmt.Sprintf("No pods of cloud shell in control cluster [%s]", controlCluster.ClusterName)
-		logger.Info(msg)
+		clog.Info(msg)
 		return nil, errors.New(msg)
 	} else {
 		cfg = tmpCfg
@@ -192,7 +192,7 @@ func getControlCluster() (cfg *rest.Config, err error) {
 
 	if cfg == nil {
 		msg := fmt.Sprintf("Fail to get control cluster where pod of cloud-shell backend dp [%v] in namespace [%s] more than one!! please check if valid control cluster in Dd", CloudShellDpName, CloudShellNs)
-		logger.Error(msg)
+		clog.Error(msg)
 		return nil, errors.New(msg)
 	}
 

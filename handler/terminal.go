@@ -16,7 +16,6 @@ limitations under the License.
 
 package handler
 
-import "C"
 import (
 	"bytes"
 	"encoding/json"
