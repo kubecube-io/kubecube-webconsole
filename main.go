@@ -22,6 +22,7 @@ import (
 	logger "github.com/astaxie/beego/logs"
 	"github.com/golang/glog"
 	"github.com/kubecube-io/kubecube/pkg/clients"
+	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
@@ -39,6 +40,7 @@ func init() {
 
 func main() {
 
+	clog.InitCubeLoggerWithOpts(&clog.Config{LogLevel: "info", StacktraceLevel: "error"})
 	// hostname is the key to select the master, so it must be terminated if it fails
 	hostname, err := os.Hostname()
 	if err != nil {

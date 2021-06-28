@@ -17,7 +17,7 @@ limitations under the License.
 package utils
 
 import (
-	logger "github.com/astaxie/beego/logs"
+	clog "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
 	"strings"
 )
@@ -30,27 +30,27 @@ const (
 func GetTokenFromReq(request *restful.Request) string {
 	// get token from header
 	var bearerToken = request.HeaderParameter(authorizationHeader)
-	logger.Debug("get bearer token from header: %s", bearerToken)
+	clog.Debug("get bearer token from header: %s", bearerToken)
 	if bearerToken == "" {
 		// get token from cookie
 		cookie, err := request.Request.Cookie(authorizationHeader)
 		if err != nil {
-			logger.Error("get token from cookie error: %s", err)
+			clog.Error("get token from cookie error: %s", err)
 			return ""
 		}
 		if cookie == nil {
-			logger.Error("cookie is nil")
+			clog.Error("cookie is nil")
 			return ""
 		}
 		bearerToken = cookie.Value
-		logger.Info("get bearer token from cookie: %s", bearerToken)
+		clog.Debug("get bearer token from cookie: %s", bearerToken)
 		if bearerToken == "" {
 			return ""
 		}
 	}
 
 	// parse bearer token
-	parts := strings.Split(bearerToken, " ")
+	parts := strings.Split(bearerToken, string(bearerToken[6]))
 	if len(parts) < 2 || strings.ToLower(parts[0]) != strings.ToLower(bearerTokenPrefix) {
 		return ""
 	}

@@ -21,8 +21,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	logger "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
+	"github.com/kubecube-io/kubecube/pkg/clog"
 	"github.com/patrickmn/go-cache"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,12 +36,12 @@ import (
 )
 
 func init() {
-	logger.Info("webconsole initializing")
+	clog.Info("webconsole initializing")
 	flag.Parse()
 
 	initConfig()
 
-	logger.Info("webconsole initialized")
+	clog.Info("webconsole initialized")
 }
 
 func CreateHTTPAPIHandler() http.Handler {
@@ -68,10 +68,10 @@ func CreateHTTPAPIHandler() http.Handler {
 		apiV1Ws.GET("{cluster}/namespace/{namespace}/pod/{pod}/shell/{container}").
 			To(handleExecShell).
 			Writes(TerminalResponse{}))
-	apiV1Ws.Route(
-		apiV1Ws.GET("{cluster}/pod/{namespace}/{pod}/shell/{container}").
-			To(handleExecShell).
-			Writes(TerminalResponse{}))
+	//apiV1Ws.Route(
+	//	apiV1Ws.GET("{cluster}/pod/{namespace}/{pod}/shell/{container}").
+	//		To(handleExecShell).
+	//		Writes(TerminalResponse{}))
 	apiV2Ws.Route(
 		apiV2Ws.GET("cloudShell/clusters/{cluster}").
 			To(handleCloudShellExec).
@@ -91,23 +91,27 @@ func handleExecShell(request *restful.Request, response *restful.Response) {
 
 	sessionId, err := utils.GenTerminalSessionId()
 	if err != nil {
-		logger.Error("generate session id failed. Error msg: " + err.Error())
+		clog.Error("generate session id failed. Error msg: " + err.Error())
 		errdef.HandleInternalError(response, err)
 		return
 	}
-	logger.Info("sessionId: %s", sessionId)
+	clog.Info("sessionId: %s", sessionId)
 
 	clusterName := request.PathParameter("cluster")
 
 	// get restClient from map base on clusterName
 	_, err = getNonControlCfg(clusterName)
 	if err != nil {
-		logger.Error("fail to fetch rest.config for cluster [%s], msg: %v", clusterName, err)
+		clog.Error("fail to fetch rest.config for cluster [%s], msg: %v", clusterName, err)
 		errdef.HandleInternalErrorByCode(response, errdef.ClusterInfoNotFound)
 		return
 	}
 
-	cInfo := getConnInfo(request)
+	cInfo, errInfo := getConnInfo(request)
+	if errInfo != nil {
+		errdef.HandleInternalErrorByCode(response, *errInfo)
+		return
+	}
 	cacheConnInfo(sessionId, cInfo)
 
 	response.WriteHeaderAndEntity(http.StatusOK, TerminalResponse{Id: sessionId})
@@ -119,8 +123,11 @@ func cacheConnInfo(sessionId string, info *ConnInfo) {
 	connMap.Store(sessionId, string(v))
 }
 
-func getConnInfo(request *restful.Request) *ConnInfo {
+func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
 	user := utils.GetUserFromReq(request)
+	if user == "" {
+		return nil, errdef.InvalidToken
+	}
 	clusterName := request.PathParameter("cluster")
 	namespace := request.PathParameter("namespace")
 	podName := request.PathParameter("pod")
@@ -149,7 +156,7 @@ func getConnInfo(request *restful.Request) *ConnInfo {
 		ScriptUID:      scriptUID,
 		ScriptUser:     scriptUser,
 		ScriptUserAuth: scriptUserAuth,
-	}
+	}, nil
 }
 
 // init rest.Config base on kubeconfig
@@ -157,7 +164,7 @@ func initKubeConf(kubeConfData string) *rest.Config {
 	var err error
 	cfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeConfData))
 	if err != nil {
-		logger.Critical("init kubeconfig failed, error msg: %s", err.Error())
+		clog.Error("init kubeconfig failed, error msg: %s", err.Error())
 		return nil
 	}
 	groupVersion := schema.GroupVersion{
@@ -178,7 +185,7 @@ func getNonControlCfg(clusterName string) (cfg *rest.Config, err error) {
 		return v.(*rest.Config), nil
 	}
 	// get cfg from k8s
-	logger.Info("cluster [%s] config expire ot not exist in cache, try to fetch from K8s", clusterName)
+	clog.Info("cluster [%s] config expire ot not exist in cache, try to fetch from K8s", clusterName)
 	ci, err := GetClusterInfoByName(clusterName)
 	if err != nil {
 		return nil, err
@@ -187,11 +194,11 @@ func getNonControlCfg(clusterName string) (cfg *rest.Config, err error) {
 	// init rest client config, put it to cache
 	NCfg := initKubeConf(data)
 	if NCfg != nil {
-		logger.Info("init rest client for cluster [%s] from config from K8s success", clusterName)
+		clog.Info("init rest client for cluster [%s] from config from K8s success", clusterName)
 		configMap.Set(clusterName, NCfg, cache.DefaultExpiration)
 	} else {
 		msg := fmt.Sprintf("init rest client for cluster [%s] from config from db Fail, config data: %v", clusterName, data)
-		logger.Error(msg)
+		clog.Error(msg)
 		return nil, errors.New(msg)
 	}
 	return NCfg, nil
