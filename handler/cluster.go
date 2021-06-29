@@ -21,6 +21,7 @@ import (
 	clog "github.com/astaxie/beego/logs"
 	clusterv1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
 	"github.com/kubecube-io/kubecube/pkg/clients"
+	"github.com/kubecube-io/kubecube/pkg/utils/constants"
 	"k8s.io/apimachinery/pkg/types"
 )
 
@@ -29,12 +30,12 @@ func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, e
 		return nil, nil
 	}
 	var (
-		client  = clients.Interface().Kubernetes(clusterName)
-		ctx     = context.Background()
-		cluster = clusterv1.Cluster{}
+		pivotClient = clients.Interface().Kubernetes(constants.PivotCluster)
+		ctx         = context.Background()
+		cluster     = clusterv1.Cluster{}
 	)
 	key := types.NamespacedName{Name: clusterName}
-	err = client.Cache().Get(ctx, key, &cluster)
+	err = pivotClient.Cache().Get(ctx, key, &cluster)
 	if err != nil {
 		clog.Error("get cluster failed: %v", err)
 		return nil, err

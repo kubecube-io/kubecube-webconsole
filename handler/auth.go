@@ -22,10 +22,14 @@ import (
 	"encoding/json"
 	clog "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
+	v1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
 	"github.com/kubecube-io/kubecube/pkg/clients"
+	"github.com/kubecube-io/kubecube/pkg/utils/constants"
+	"github.com/kubecube-io/kubecube/pkg/utils/kubeconfig"
 	"io/ioutil"
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"kubecube-webconsole/utils"
 	"net/http"
 	"strings"
@@ -95,6 +99,7 @@ func isAuthValid(request *restful.Request) bool {
 	if string(body) == "true" {
 		return true
 	}
+	clog.Debug("kubecube auth response is false.")
 	return false
 }
 
@@ -103,16 +108,25 @@ func isNsOrPodBelongToNamespace(request *restful.Request) bool {
 	podName := request.PathParameter("pod")
 	namespace := request.PathParameter("namespace")
 	clusterName := request.PathParameter("cluster")
-	var (
-		client = clients.Interface().Kubernetes(clusterName)
-		ctx    = context.Background()
-		pod    = corev1.Pod{}
-	)
-	key := types.NamespacedName{Namespace: namespace, Name: podName}
-	err := client.Cache().Get(ctx, key, &pod)
+	pivotClient := clients.Interface().Kubernetes(constants.PivotCluster)
+	memberCluster := v1.Cluster{}
+	pivotClient.Cache().Get(request.Request.Context(), types.NamespacedName{Name: clusterName}, &memberCluster)
+
+	config := memberCluster.Spec.KubeConfig
+	kubeConfig, err := kubeconfig.LoadKubeConfigFromBytes(config)
 	if err != nil {
-		clog.Error("get pod failed: %v", err)
+		clog.Error("convert kubeconfig error: %s", err)
 		return false
+	}
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		clog.Error("problem new raw k8s clientSet: %v", err)
+		return false
+	}
+
+	pod, err := clientSet.CoreV1().Pods(namespace).Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil {
+		clog.Error("get pod error: %s", err)
 	}
 	if len(pod.Name) > 0 {
 		return true

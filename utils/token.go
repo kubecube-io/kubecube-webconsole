@@ -30,7 +30,6 @@ const (
 func GetTokenFromReq(request *restful.Request) string {
 	// get token from header
 	var bearerToken = request.HeaderParameter(authorizationHeader)
-	clog.Debug("get bearer token from header: %s", bearerToken)
 	if bearerToken == "" {
 		// get token from cookie
 		cookie, err := request.Request.Cookie(authorizationHeader)
@@ -43,8 +42,8 @@ func GetTokenFromReq(request *restful.Request) string {
 			return ""
 		}
 		bearerToken = cookie.Value
-		clog.Debug("get bearer token from cookie: %s", bearerToken)
 		if bearerToken == "" {
+			clog.Error("token is nil")
 			return ""
 		}
 	}

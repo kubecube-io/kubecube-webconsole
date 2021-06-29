@@ -31,7 +31,7 @@ const (
 	LeaderElectionNamespace = "kube-system"
 	NamespaceKey            = "namespace"
 	KubeCubeChrootShPath    = "/kubecube-chroot.sh"
-	CloudShellLabelKey      = "system/app"
+	CloudShellLabelKey      = "kubecube.io/app"
 )
 
 const (
@@ -51,7 +51,6 @@ type TerminalResponse struct {
 
 // ConnInfo stores container-connect related information
 type ConnInfo struct {
-	ClusterId     string `json:"clusterId"`
 	ClusterName   string `json:"clusterName"`
 	PodName       string `json:"podName"`
 	ContainerName string `json:"containerName"`
@@ -63,6 +62,7 @@ type ConnInfo struct {
 	UserName         string        `json:"userName"`
 	IsControlCluster bool          `json:"isControlCluster"`
 	AuditRawInfo     *AuditRawInfo `json:"audit_raw_info,omitempty"`
+	Token            string        `json:"token,omitempty"`
 }
 
 type AuditRawInfo struct {
@@ -86,7 +86,7 @@ var (
 	ServerPort        = flag.Int("serverPort", 9081, "set server port")
 	scriptName        = flag.String("scriptName", "/init.sh", "script name with full path in container")
 	cloudShellDpName  = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")
-	appNamespace      = flag.String("appNamespace", "cloud-shell", "namespace of cloud shell deployment, default same as cloud-shell")
+	appNamespace      = flag.String("appNamespace", "kubecube-system", "namespace of cloud shell deployment, default same as kubecube-system")
 	enableAudit       = flag.Bool("enableAudit", false, "enable audit function")
 	enableStdoutAudit = flag.Bool("enableStdoutAudit", false, "enable stdout audit")
 )
