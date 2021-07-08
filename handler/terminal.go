@@ -217,7 +217,7 @@ func connectToContainer(k8sClient *rest.RESTClient, cfg *rest.Config, info *Conn
 	// connect to control service
 	var req *rest.Request
 	if info.IsControlCluster {
-		cmds := []string{KubeCubeChrootShPath, "-a", info.UserName, "-c", info.ClusterId}
+		cmds := []string{KubeCubeChrootShPath, "-u", info.UserName, "-c", info.ClusterName, "-t", info.Token}
 
 		req = k8sClient.Post().
 			Resource("pods").

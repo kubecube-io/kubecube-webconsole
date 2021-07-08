@@ -36,8 +36,17 @@ import (
 
 func handleCloudShellExec(request *restful.Request, response *restful.Response) {
 	// check user simply
-	user := utils.GetUserFromReq(request)
-	if user == "" {
+	token := utils.GetTokenFromReq(request)
+	var user string
+	if token != "" {
+		claims := utils.ParseToken(token)
+		if claims != nil {
+			user = claims.UserInfo.Username
+		}
+	}
+
+	if user == "" || token == "" {
+		clog.Error("user is not exist")
 		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
 		return
 	}
@@ -106,7 +115,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		ClusterName:      constants.ControlClusterName,
 		UserName:         user,
 		IsControlCluster: true,
-		ClusterId:        clusterName,
+		Token:            token,
 	}
 
 	connInfoBytes, _ := json.Marshal(shellConnInfo)
