@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	logger "github.com/astaxie/beego/logs"
+
+	"github.com/kubecube-io/kubecube/pkg/clog"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -235,22 +237,29 @@ func connectToContainer(k8sClient *rest.RESTClient, cfg *rest.Config, info *Conn
 			TTY:       true,
 		}, scheme.ParameterCodec)
 
-	} else {
-		cmds := buildCMD(info)
-		req = k8sClient.Post().
-			Resource("pods").
-			Name(podName).
-			Namespace(namespace).
-			SubResource("exec").
-			Param(ResourceContainer, containerName).
-			Param(IoStdin, "true").
-			Param(IoStdout, "true").
-			Param(IoStderr, "true").
-			Param(TTY, "true")
-		req = req.VersionedParams(&v1.PodExecOptions{
-			Command: cmds,
-		}, scheme.ParameterCodec)
+		err := postReq(req, cfg, ptyHandler)
+		if err != nil {
+			clog.Error("run shell or connect to container error: %s", err)
+			return err
+		}
+		return nil
 	}
+
+	cmds := buildCMD(info)
+	req = k8sClient.Post().
+		Resource("pods").
+		Name(podName).
+		Namespace(namespace).
+		SubResource("exec").
+		Param(ResourceContainer, containerName).
+		Param(IoStdin, "true").
+		Param(IoStdout, "true").
+		Param(IoStderr, "true").
+		Param(TTY, "true")
+	req = req.VersionedParams(&v1.PodExecOptions{
+		Command: cmds,
+	}, scheme.ParameterCodec)
+
 	// try to run `/bin/bash` after into container
 	err := postReq(req, cfg, ptyHandler)
 	// if err, run `/bin/sh`

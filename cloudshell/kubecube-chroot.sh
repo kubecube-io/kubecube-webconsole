@@ -48,11 +48,13 @@ if [ ! -d $DIR ]; then
     done
 
     cp  /bin/kubectl  $DIR/bin/
+    cp /etc/hosts $DIR/etc/hosts
+    cp /etc/resolv.conf $DIR/etc/resolv.conf
 fi
 
 ## wget download kubeconfig
-wget --header="Authorization: Bearer $TOKEN"  "https://kubecube-nodeport.kubecube-system:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME &>/dev/null
-## check whether kubeconfig download success
+wget --header="Authorization: Bearer $TOKEN"  "https://kubecube.kubecube-system:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME &>/dev/null --no-check-certificate
+# check whether kubeconfig download success
 if [ $? -ne 0 ]; then
     exit 1
 fi
