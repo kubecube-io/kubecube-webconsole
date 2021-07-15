@@ -9,9 +9,7 @@ FROM golang:1.15 as builder
 WORKDIR /go/src/kubecube-webconsole
 COPY . .
 
-RUN git config --global url."https://JiahuiZhao11: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@github.com".insteadOf "https://github.com"
 RUN go mod download
-
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -a -o webconsole main.go
