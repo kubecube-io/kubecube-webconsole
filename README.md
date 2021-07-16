@@ -1,9 +1,5 @@
 # kubecube-webconsole
 
-[![License](http://img.shields.io/badge/license-apache%20v2-blue.svg)](https://https://github.com/kubecube-io/kubecube/blob/main/LICENSE)  [![build](https://img.shields.io/github/workflow/status/kubecube-io/kubecube/Go)](https://github.com/kubecube-io/KubeCube/actions/workflows/build.yml)
-
-![logo](./images/logo.png)
-
 > English | [中文文档](README-zh_CN.md)
 
 ### Architecture
@@ -39,10 +35,6 @@ During the interaction between the front and webconsole, there is two API calls:
   return sample：
   `{"websocket":true,"cookie_needed":false,"origins":["*:*"],"entropy":1983920037}`
   The value of websocket is `true`, indicates that the sockjs used in webconsole has the websocket function enabled, so the front-end sockJs will establish a websocket connection with webconsole.
-
-## Feedback & Contact
-
-[FAQ](https://www.kubecube.io/docs/faq/)
 
 ## License
 

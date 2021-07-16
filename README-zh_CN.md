@@ -34,10 +34,6 @@
    `{"websocket":true,"cookie_needed":false,"origins":["*:*"],"entropy":1983920037}`
    其中websocket的值为`true`，表明webconsole中使用的sockjs使能了websocket功能，因此前端sockJs会建立起跟webconsole的websocket连接。
 
-## 讨论与反馈
-
-[FAQ](https://www.kubecube.io/docs/faq/)
-
 ## 开源协议
 
 ```
