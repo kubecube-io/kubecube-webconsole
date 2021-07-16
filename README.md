@@ -4,7 +4,7 @@
 
 ![logo](./images/logo.png)
 
-> English | [中文文档](README.md)
+> English | [中文文档](README-zh_CN.md)
 
 ### Architecture
 
