@@ -29,19 +29,17 @@ all: build
 # More info on the awk command:
 # http://linuxcommand.org/lc3_adv_awk.php
 
-vendor:
-	go mod vendor
 
-docker-build-webconsole: vendor #test ## Build docker image with the manager.
+docker-build-webconsole:  #test ## Build docker image with the manager.
 	docker build -f ./Dockerfile -t ${IMG} .
 
-docker-build-webconsole-multi-arch: vendor #test
+docker-build-webconsole-multi-arch:  #test
 	MULTI_ARCH=true
 	docker buildx build -f ./Dockerfile -t ${IMG} --platform=linux/arm,linux/arm64,linux/amd64 . --push
 
-docker-build-cloudshell: vendor #test
+docker-build-cloudshell:  #test
 	docker build -f ./cloudshell/Dockerfile -t ${IMG} .
 
-docker-build-cloudshell-multi-arch: vendor #test
+docker-build-cloudshell-multi-arch:  #test
 	MULTI_ARCH=true
 	docker buildx build -f ./cloudshell/Dockerfile -t ${IMG} --platform=linux/arm,linux/arm64,linux/amd64 . --push

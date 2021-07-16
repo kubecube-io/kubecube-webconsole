@@ -12,7 +12,7 @@ COPY . .
 RUN go mod download
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -a -o webconsole main.go
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -mod=mod -a -o webconsole main.go
 
 # Copy the ripple into a thin image
 FROM debian:stretch-slim
