@@ -1,4 +1,8 @@
-# v1.0.0
-## Features:
-- webconsole：进入副本中的容器，发送请求
-- cloudshell：进入指定的容器，并调用脚本使用户隔离
+# V1.0.0-rc0
+
+2021-7-16
+
+## Feature
+
+- Webconsole：enter container in pods and post request
+- Cloudshell：enter the specified container and call the script to isolate the user operation
