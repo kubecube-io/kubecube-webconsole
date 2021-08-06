@@ -19,6 +19,10 @@ package kubernetes
 import (
 	"context"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/kubecube-io/kubecube/pkg/apis"
 
 	"k8s.io/metrics/pkg/client/clientset/versioned"
@@ -47,6 +51,8 @@ func init() {
 	utilruntime.Must(apis.AddToScheme(scheme))
 
 	utilruntime.Must(hnc.AddToScheme(scheme))
+
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 }
 
 // Client retrieves k8s resource with cache or not
@@ -54,16 +60,19 @@ type Client interface {
 	Cache() cache.Cache
 	Direct() client.Client
 	Metrics() versioned.Interface
+	ClientSet() kubernetes.Interface
 }
 
 type InternalClient struct {
-	client  client.Client
-	cache   cache.Cache
-	metrics versioned.Interface
+	client client.Client
+	cache  cache.Cache
+
+	rawClientSet kubernetes.Interface
+	metrics      versioned.Interface
 }
 
 // NewClientFor generate client by config
-func NewClientFor(cfg *rest.Config, stopCh chan struct{}) *InternalClient {
+func NewClientFor(cfg *rest.Config, stopCh chan struct{}) Client {
 	var err error
 	c := new(InternalClient)
 
@@ -80,6 +89,11 @@ func NewClientFor(cfg *rest.Config, stopCh chan struct{}) *InternalClient {
 	c.metrics, err = versioned.NewForConfig(cfg)
 	if err != nil {
 		clog.Error("problem new metrics client: %v", err)
+	}
+
+	c.rawClientSet, err = kubernetes.NewForConfig(cfg)
+	if err != nil {
+		clog.Error("problem new raw k8s clientSet: %v", err)
 	}
 
 	ctx := exit.SetupCtxWithStop(context.Background(), stopCh)
@@ -105,6 +119,10 @@ func (c *InternalClient) Direct() client.Client {
 
 func (c *InternalClient) Metrics() versioned.Interface {
 	return c.metrics
+}
+
+func (c *InternalClient) ClientSet() kubernetes.Interface {
+	return c.rawClientSet
 }
 
 // WithSchemes allow add extensions scheme to client

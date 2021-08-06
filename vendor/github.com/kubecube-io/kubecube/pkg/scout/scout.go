@@ -19,7 +19,12 @@ package scout
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"k8s.io/client-go/util/retry"
 
 	"github.com/kubecube-io/kubecube/pkg/clog"
 
@@ -59,6 +64,9 @@ type Scout struct {
 
 	// use to stop scout for
 	StopCh chan struct{}
+
+	// Once ensure scout for be called once
+	Once *sync.Once
 }
 
 // WardenInfo contains intelligence within communication
@@ -82,6 +90,7 @@ func NewScout(cluster string, initialDelay, waitTimeoutSeconds int, cli client.C
 		WaitTimeoutSeconds:  waitTimeoutSeconds,
 		Client:              cli,
 		StopCh:              stopCh,
+		Once:                &sync.Once{},
 	}
 
 	return s
@@ -98,25 +107,30 @@ func (s *Scout) Collect(ctx context.Context) {
 			s.illWarden(ctx)
 
 		case <-ctx.Done():
-			clog.Warn("probe context exceed: %v", ctx.Err())
+			clog.Warn("scout of %v warden stopped: %v", s.Cluster, ctx.Err())
 			return
 		}
 	}
 }
 
 // healthWarden be called once when receive heartbeat first
-// todo: populate network delay with watden info
+// todo(weilaaa): populate network delay with watden info
 func (s *Scout) healthWarden(ctx context.Context, info WardenInfo) {
+	cluster := &v1.Cluster{}
+	err := s.Client.Get(ctx, types.NamespacedName{Name: s.Cluster}, cluster)
+	if err != nil {
+		clog.Error(err.Error())
+	}
+
 	s.LastHeartbeat = time.Now()
 
-	if !s.Normal {
-		state := v1.ClusterNormal
-		reason := fmt.Sprintf("receive heartbeat from cluster %s", s.Cluster)
+	state := v1.ClusterNormal
+	reason := fmt.Sprintf("receive heartbeat from cluster %s", s.Cluster)
+	ts := &metav1.Time{Time: s.LastHeartbeat}
 
-		err := s.updateClusterStatus(state, reason, ctx)
-		if err != nil {
-			clog.Error(err.Error())
-		}
+	err = s.updateClusterStatus(cluster, state, reason, ts, ctx)
+	if err != nil {
+		clog.Error(err.Error())
 	}
 
 	s.Normal = true
@@ -124,12 +138,24 @@ func (s *Scout) healthWarden(ctx context.Context, info WardenInfo) {
 
 // illWarden do callback when warden ill
 func (s *Scout) illWarden(ctx context.Context) {
+	cluster := &v1.Cluster{}
+	err := s.Client.Get(ctx, types.NamespacedName{Name: s.Cluster}, cluster)
+	if err != nil {
+		clog.Error(err.Error())
+	}
+
+	if !isDisconnected(cluster, s.WaitTimeoutSeconds) {
+		return
+	}
+
 	if s.Normal {
 		state := v1.ClusterAbnormal
 		reason := fmt.Sprintf("cluster %s disconnected", s.Cluster)
-		clog.Info("%v, last heartbeat: %v", reason, s.LastHeartbeat)
+		ts := &metav1.Time{Time: s.LastHeartbeat}
 
-		err := s.updateClusterStatus(state, reason, ctx)
+		clog.Warn("%v, last heartbeat: %v", reason, s.LastHeartbeat)
+
+		err := s.updateClusterStatus(cluster, state, reason, ts, ctx)
 		if err != nil {
 			clog.Error(err.Error())
 		}
@@ -138,21 +164,35 @@ func (s *Scout) illWarden(ctx context.Context) {
 	s.Normal = false
 }
 
-func (s *Scout) updateClusterStatus(state v1.ClusterState, reason string, ctx context.Context) error {
-	c := s.Client
-
-	obj := &v1.Cluster{}
-	err := c.Get(ctx, types.NamespacedName{Name: s.Cluster}, obj)
-	if err != nil {
-		return err
+// isDisconnected determines the health of the cluster
+func isDisconnected(cluster *v1.Cluster, waitTimeoutSecond int) bool {
+	// has no LastHeartbeat return directly
+	if cluster.Status.LastHeartbeat == nil {
+		return true
 	}
 
-	obj.Status.State = &state
-	obj.Status.Reason = reason
-	err = c.Status().Update(ctx, obj, &client.UpdateOptions{})
-	if err != nil {
-		return err
+	// if sub time less than timeout setting, we consider the is healthy
+	v := time.Now().Sub(cluster.Status.LastHeartbeat.Time)
+	if v.Milliseconds() < (time.Duration(waitTimeoutSecond) * time.Second).Milliseconds() {
+		return false
 	}
 
-	return nil
+	return true
+}
+
+// updateClusterStatus will be called frequently，default interval is 3 seconds
+func (s *Scout) updateClusterStatus(cluster *v1.Cluster, state v1.ClusterState, reason string, lastHeartbeat *metav1.Time, ctx context.Context) error {
+	objCopy := cluster.DeepCopy()
+
+	objCopy.Status.State = &state
+	objCopy.Status.Reason = reason
+	objCopy.Status.LastHeartbeat = lastHeartbeat
+
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		err := s.Client.Status().Update(ctx, objCopy, &client.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }

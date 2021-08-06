@@ -47,12 +47,12 @@ type UserSpec struct {
 	Language Language `json:"language,omitempty"`
 	// Login method used, normal/openId/ldap
 	LoginType LoginType `json:"loginType,omitempty"`
+	State     UserState `json:"state,omitempty"`
 }
 
 // UserStatus defines the observed state of User
 type UserStatus struct {
 	// The user status, normal/forbidden
-	State         UserState    `json:"state,omitempty"`
 	LastLoginTime *metav1.Time `json:"lastLoginTime,omitempty"`
 	LastLoginIP   string       `json:"lastLoginIP,omitempty"`
 }
