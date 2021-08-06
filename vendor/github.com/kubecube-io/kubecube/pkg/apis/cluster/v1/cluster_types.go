@@ -54,8 +54,9 @@ type ClusterSpec struct {
 
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
-	State  *ClusterState `json:"state,omitempty"`
-	Reason string        `json:"reason,omitempty"`
+	State         *ClusterState `json:"state,omitempty"`
+	Reason        string        `json:"reason,omitempty"`
+	LastHeartbeat *metav1.Time  `json:"lastHeartbeat,omitempty"`
 }
 
 //+kubebuilder:object:root=true

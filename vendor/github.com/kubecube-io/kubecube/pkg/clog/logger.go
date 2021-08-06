@@ -24,11 +24,11 @@ type CubeLogger interface {
 	// AddCallerSkip new cube logger with callstack skipping.
 	AddCallerSkip(callerSkip int) CubeLogger
 
-	// WithValues adds some key-value pairs of context to a logger.
+	// WithName adds some key-value pairs of context to a logger.
 	// See Info for documentation on how key/value pairs work.
 	WithName(name string) CubeLogger
 
-	// WithName adds a new element to the logger's name.
+	// WithValues adds a new element to the logger's name.
 	// Successive calls with WithName continue to append
 	// suffixes to the logger's name.  It's strongly recommended
 	// that name segments contain only letters, digits, and hyphens

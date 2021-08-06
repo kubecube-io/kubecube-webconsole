@@ -14,12 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package multicluster
+package manager
 
 import (
 	"context"
 	"fmt"
 	"sync"
+
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	hnc "sigs.k8s.io/multi-tenancy/incubator/hnc/api/v1alpha2"
+
+	"github.com/kubecube-io/kubecube/pkg/apis"
+	v1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
+	"github.com/kubecube-io/kubecube/pkg/utils/kubeconfig"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"k8s.io/client-go/rest"
 
@@ -41,7 +54,7 @@ type MultiClustersManager interface {
 	Del(cluster string) error
 
 	// FuzzyCopy return fuzzy cluster of raw
-	FuzzyCopy() map[string]*fuzzyCluster
+	FuzzyCopy() map[string]*FuzzyCluster
 
 	// ScoutFor scout heartbeat for warden
 	ScoutFor(ctx context.Context, cluster string) error
@@ -50,22 +63,50 @@ type MultiClustersManager interface {
 	GetClient(cluster string) (kubernetes.Client, error)
 }
 
-// multiClusterMgr instance implement interface,
+// MultiClusterMgr instance implement interface,
 // init pivot cluster at first.
-var multiClusterMgr = newMultiClusterMgr()
+var MultiClusterMgr = newMultiClusterMgr()
 
 // newMultiClusterMgr init MultiClustersMgr with pivot internal cluster
 func newMultiClusterMgr() *MultiClustersMgr {
 	m := &MultiClustersMgr{Clusters: make(map[string]*InternalCluster)}
-	config := ctrl.GetConfigOrDie()
+	config, err := ctrl.GetConfig()
+	if err != nil {
+		clog.Warn("get kubeconfig failed: %v, only allowed when testing", err)
+		return nil
+	}
+
+	scheme := runtime.NewScheme()
+	utilruntime.Must(apis.AddToScheme(scheme))
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(hnc.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
+
+	cli, err := client.New(config, client.Options{Scheme: scheme})
+	if err != nil {
+		clog.Warn(err.Error())
+		return nil
+	}
+
+	cluster := v1.Cluster{}
+	err = cli.Get(context.Background(), types.NamespacedName{Name: constants.PivotCluster}, &cluster)
+	if err != nil {
+		clog.Warn(err.Error())
+		return nil
+	}
+
+	cfg, err := kubeconfig.LoadKubeConfigFromBytes(cluster.Spec.KubeConfig)
+	if err != nil {
+		clog.Fatal(err.Error())
+	}
 
 	c := new(InternalCluster)
 	c.StopCh = make(chan struct{})
-	c.Config = config
-	c.Client = kubernetes.NewClientFor(config, c.StopCh)
+	c.Config = cfg
+	c.Client = kubernetes.NewClientFor(cfg, c.StopCh)
 	c.Scout = scout.NewScout(constants.PivotCluster, 0, 0, c.Client.Direct(), c.StopCh)
 
-	err := m.Add(constants.PivotCluster, c)
+	err = m.Add(constants.PivotCluster, c)
 	if err != nil {
 		clog.Fatal("init multi cluster mgr failed: %v", err)
 	}
@@ -75,7 +116,7 @@ func newMultiClusterMgr() *MultiClustersMgr {
 // InternalCluster represent a cluster runtime contains
 // client and internal warden.
 type InternalCluster struct {
-	Client *kubernetes.InternalClient
+	Client kubernetes.Client
 	Scout  *scout.Scout
 
 	// Config bind to a real cluster
@@ -139,19 +180,20 @@ func (m *MultiClustersMgr) Del(cluster string) error {
 	return nil
 }
 
-type fuzzyCluster struct {
+// FuzzyCluster be exported for test
+type FuzzyCluster struct {
 	Name   string
 	Config *rest.Config
-	Client *kubernetes.InternalClient
+	Client kubernetes.Client
 }
 
-func (m *MultiClustersMgr) FuzzyCopy() map[string]*fuzzyCluster {
+func (m *MultiClustersMgr) FuzzyCopy() map[string]*FuzzyCluster {
 	m.RLock()
 	defer m.RUnlock()
 
-	clusters := make(map[string]*fuzzyCluster)
+	clusters := make(map[string]*FuzzyCluster)
 	for name, v := range m.Clusters {
-		clusters[name] = &fuzzyCluster{
+		clusters[name] = &FuzzyCluster{
 			Name:   name,
 			Config: v.Config,
 			Client: v.Client,
@@ -159,8 +201,4 @@ func (m *MultiClustersMgr) FuzzyCopy() map[string]*fuzzyCluster {
 	}
 
 	return clusters
-}
-
-func Interface() MultiClustersManager {
-	return multiClusterMgr
 }
