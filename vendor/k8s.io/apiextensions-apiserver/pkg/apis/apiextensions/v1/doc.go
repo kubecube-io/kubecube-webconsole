@@ -1,5 +1,5 @@
 /*
-Copyright 2021 KubeCube Authors
+Copyright 2019 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,27 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package multicluster
+// +k8s:deepcopy-gen=package
+// +k8s:protobuf-gen=package
+// +k8s:conversion-gen=k8s.io/apiextensions-apiserver/pkg/apis/apiextensions
+// +k8s:defaulter-gen=TypeMeta
+// +k8s:openapi-gen=true
+// +groupName=apiextensions.k8s.io
 
-import (
-	"context"
-	"time"
-
-	"github.com/kubecube-io/kubecube/pkg/utils/exit"
-)
-
-// ScoutFor starts watch for warden intelligence
-func (m *MultiClustersMgr) ScoutFor(ctx context.Context, cluster string) error {
-	c, err := m.Get(cluster)
-	if err != nil {
-		return err
-	}
-
-	ctx = exit.SetupCtxWithStop(ctx, c.Scout.StopCh)
-
-	time.AfterFunc(time.Duration(c.Scout.InitialDelaySeconds)*time.Second, func() {
-		go c.Scout.Collect(ctx)
-	})
-
-	return nil
-}
+// Package v1 is the v1 version of the API.
+package v1 // import "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"

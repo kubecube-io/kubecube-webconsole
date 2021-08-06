@@ -20,6 +20,7 @@ import (
 	"github.com/kubecube-io/kubecube/pkg/clients/kubernetes"
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"github.com/kubecube-io/kubecube/pkg/multicluster"
+	"github.com/kubecube-io/kubecube/pkg/multicluster/manager"
 )
 
 // Clients aggregates all clients of cube needed
@@ -27,14 +28,14 @@ type Clients interface {
 	Kubernetes(cluster string) kubernetes.Client
 }
 
-var (
-	genericClientSet = &cubeClientSet{}
-)
+// genericClientSet is global cube cube client that must init at first
+var genericClientSet = &cubeClientSet{}
 
 type cubeClientSet struct {
-	k8s multicluster.MultiClustersManager
+	k8s manager.MultiClustersManager
 }
 
+// InitCubeClientSetWithOpts initialize global clients with given config.
 func InitCubeClientSetWithOpts(opts *Config) {
 	genericClientSet.k8s = multicluster.Interface()
 }
@@ -44,6 +45,8 @@ func Interface() *cubeClientSet {
 	return genericClientSet
 }
 
+// Kubernetes get the indicate client for cluster, we log error instead of return it
+// for convenience, caller needs to determine whether the return value is nil
 func (c *cubeClientSet) Kubernetes(cluster string) kubernetes.Client {
 	client, err := c.k8s.GetClient(cluster)
 	if err != nil {
