@@ -37,9 +37,9 @@ docker-build-webconsole-multi-arch:  #test
 	MULTI_ARCH=true
 	docker buildx build -f ./Dockerfile -t ${IMG} --platform=linux/arm,linux/arm64,linux/amd64 . --push
 
-docker-build-cloudshell:  #test
-	docker build -f ./cloudshell/Dockerfile -t ${IMG} .
+docker-build-cloudshell: #test
+	docker build -f ./cloudshell/Dockerfile -t ${IMG} ./cloudshell
 
 docker-build-cloudshell-multi-arch:  #test
 	MULTI_ARCH=true
-	docker buildx build -f ./cloudshell/Dockerfile -t ${IMG} --platform=linux/arm,linux/arm64,linux/amd64 . --push
+	docker buildx build -f ./cloudshell/Dockerfile -t ${IMG} --platform=linux/arm,linux/arm64,linux/amd64 ./cloudshell --push
