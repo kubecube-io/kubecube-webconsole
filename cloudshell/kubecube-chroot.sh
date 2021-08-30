@@ -53,14 +53,20 @@ if [ ! -d $DIR ]; then
 fi
 
 ## wget download kubeconfig
-wget --header="Authorization: Bearer $TOKEN"  "https://kubecube.kubecube-system:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME &>/dev/null --no-check-certificate
+wget --header="Authorization: Bearer $TOKEN"  "https://kubecube.kubecube-system:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 &>/dev/null --no-check-certificate
 # check whether kubeconfig download success
 if [ $? -ne 0 ]; then
     exit 1
 fi
 
+CONFIG_BASE64=$(cat $DIR/tmp/$TMP_CONFIG_NAME-base64)
+STRING_TMP=${CONFIG_BASE64#"\""}
+STRING_TMP=${STRING_TMP%"\""}
+echo $STRING_TMP | base64 -d > $DIR/tmp/$TMP_CONFIG_NAME
+
 mv -f $DIR/tmp/$TMP_CONFIG_NAME $DIR/root/.kube/config
 rm -rf $DIR/tmp/$TMP_CONFIG_NAME
+rm -rf $DIR/tmp/$TMP_CONFIG_NAME-base64
 
 #create group for account if not exists
 egrep "^$USERNAME" /etc/group >& /dev/null
