@@ -40,6 +40,7 @@ func init() {
 	flag.Parse()
 
 	initConfig()
+	initAudit()
 
 	clog.Info("webconsole initialized")
 }

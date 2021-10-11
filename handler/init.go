@@ -17,6 +17,8 @@ package handler
 
 import (
 	"github.com/patrickmn/go-cache"
+	"k8s.io/klog/v2"
+	"net/http"
 	"time"
 )
 
@@ -24,4 +26,25 @@ func initConfig() {
 	CloudShellDpName = *cloudShellDpName
 	CloudShellNs = *appNamespace
 	configMap = cache.New(5*time.Minute, 5*time.Minute)
+}
+
+func initAudit() {
+	if !*enableAudit {
+		klog.Info("audit disabled")
+		return
+	}
+
+	// 初始化http client
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost: MaxIdlePerHost,
+		},
+		Timeout: RequestTimeout * time.Second,
+	}
+	AuditAdapter = &auditAdapter{}
+	AuditAdapter.HttpClient = httpClient
+	AuditAdapter.URL = *auditURL
+	AuditAdapter.Method = *auditMethod
+	AuditAdapter.Header = *auditHeader
+	klog.Infof("audit init success, url: %v", AuditAdapter.URL)
 }
