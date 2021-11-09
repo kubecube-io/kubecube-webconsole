@@ -35,6 +35,8 @@ import (
 	"net/http"
 )
 
+const PlatformKubeCube = "kubecube"
+
 func init() {
 	clog.Info("webconsole initializing")
 	flag.Parse()
@@ -138,6 +140,14 @@ func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
 	scriptUID := request.QueryParameter("uid")
 	scriptUserAuth := request.QueryParameter("auth")
 
+	// Audit related info
+	webUser := request.QueryParameter("webuser")
+	platform := request.QueryParameter("platform")
+	// 未传入platform信息时，认为是KubeCube页面传入的
+	if platform == "" {
+		platform = PlatformKubeCube
+	}
+
 	remoteIP := request.QueryParameter("remote_ip")
 	if remoteIP == "" {
 		remoteIP = request.HeaderParameter("X-Forwarded-For")
@@ -157,6 +167,12 @@ func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
 		ScriptUID:      scriptUID,
 		ScriptUser:     scriptUser,
 		ScriptUserAuth: scriptUserAuth,
+		AuditRawInfo: &AuditRawInfo{
+			RemoteIP:  remoteIP,
+			UserAgent: ua,
+			WebUser:   webUser,
+			Platform:  platform,
+		},
 	}, nil
 }
 
