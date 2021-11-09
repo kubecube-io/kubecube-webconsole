@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	logger "github.com/astaxie/beego/logs"
+	"k8s.io/klog/v2"
+	"time"
 
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
@@ -70,10 +72,13 @@ func (t TerminalSession) Read(p []byte) (int, error) {
 			if t.stdinBuffer.String() != "" {
 				t.stdinBuffer.WriteString(strings.TrimSuffix(msg.Data, "\r"))
 				go func(cmd string) {
+					auditMsg := t.buildAuditMsg(cmd, "stdin")
+					payload, err := json.Marshal(auditMsg)
 					if err != nil {
-						logger.Error("marshal stdin audit message failed, %v", err)
+						klog.Errorf("marshal stdin audit message failed, %v", err)
 						return
 					}
+					AuditAdapter.Publish(string(payload), t.id)
 				}(t.stdinBuffer.String())
 			}
 
@@ -115,10 +120,13 @@ func (t TerminalSession) Write(p []byte) (int, error) {
 	}
 
 	go func(data string) {
+		auditMsg := t.buildAuditMsg(data, "stdout")
+		payload, err := json.Marshal(auditMsg)
 		if err != nil {
-			logger.Error("marshal stdout audit message failed, %v", err)
+			klog.Errorf("marshal stdout audit message failed, %v", err)
 			return
 		}
+		AuditAdapter.Publish(string(payload), t.id)
 	}(string(p))
 
 	return len(p), nil
@@ -330,4 +338,25 @@ func buildCMD(info *ConnInfo) []string {
 	logger.Info("try to connect to container with cmds: %v", cmds)
 
 	return cmds
+}
+
+func (t TerminalSession) buildAuditMsg(cmd string, dataType string) *AuditMsg {
+	msg := &AuditMsg{
+		SessionID:     t.id,
+		Data:          cmd,
+		DataType:      dataType,
+		CreateTime:    time.Now(),
+		PodName:       t.cInfo.PodName,
+		Namespace:     t.cInfo.Namespace,
+		ClusterName:   t.cInfo.ClusterName,
+		ContainerUser: t.cInfo.ScriptUser,
+	}
+	auditRawInfo := t.cInfo.AuditRawInfo
+	if auditRawInfo != nil {
+		msg.RemoteIP = auditRawInfo.RemoteIP
+		msg.UserAgent = auditRawInfo.UserAgent
+		msg.WebUser = auditRawInfo.WebUser
+		msg.Platform = auditRawInfo.Platform
+	}
+	return msg
 }

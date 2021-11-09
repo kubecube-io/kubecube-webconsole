@@ -24,6 +24,7 @@ import (
 	"io"
 	"k8s.io/client-go/tools/remotecommand"
 	"sync"
+	"time"
 )
 
 const (
@@ -87,8 +88,11 @@ var (
 	scriptName        = flag.String("scriptName", "/init.sh", "script name with full path in container")
 	cloudShellDpName  = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")
 	appNamespace      = flag.String("appNamespace", "kubecube-system", "namespace of cloud shell deployment, default same as kubecube-system")
-	enableAudit       = flag.Bool("enableAudit", false, "enable audit function")
+	enableAudit       = flag.Bool("enableAudit", true, "enable audit function")
 	enableStdoutAudit = flag.Bool("enableStdoutAudit", false, "enable stdout audit")
+	auditURL          = flag.String("auditURL", "http://audit.kubecube-system:8888/api/v1/cube/audit/cube", "send audit message to the url")
+	auditMethod       = flag.String("auditMethod", "POST", "send audit message request method")
+	auditHeader       = flag.String("auditHeader", "Content-Type=application/json;charset=UTF-8", "send audit message request header")
 )
 
 // TerminalSession implements PtyHandler (using a SockJS connection)
@@ -119,4 +123,20 @@ type PtyHandler interface {
 	io.Reader
 	io.Writer
 	remotecommand.TerminalSizeQueue
+}
+
+// AuditMsg stores info sent to audit server
+type AuditMsg struct {
+	SessionID     string    `json:"session_id"`
+	CreateTime    time.Time `json:"create_time"`
+	PodName       string    `json:"pod_name,omitempty"`
+	Namespace     string    `json:"namespace,omitempty"`
+	ClusterName   string    `json:"cluster_name,omitempty"`
+	Data          string    `json:"data"`
+	DataType      string    `json:"data_type"` //stdin, stdout
+	RemoteIP      string    `json:"remote_ip,omitempty"`
+	UserAgent     string    `json:"user_agent,omitempty"`
+	ContainerUser string    `json:"container_user,omitempty"`
+	WebUser       string    `json:"web_user,omitempty"`
+	Platform      string    `json:"platform,omitempty"` // 通过什么平台传入的，如严选SNest\严选Opera或者轻舟页面
 }
