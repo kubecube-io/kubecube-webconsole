@@ -88,8 +88,12 @@ func isAuthValid(request *restful.Request) bool {
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 		Timeout:   5 * time.Second,
 	}
-	resp, _ := c.Post("https://"+utils.GetKubeCubeSvc()+"/api/v1/cube/authorization/access",
-		"application/x-www-form-urlencoded", strings.NewReader(string(bytesData)))
+	resp, err := c.Post("https://"+utils.GetKubeCubeSvc()+"/api/v1/cube/authorization/access",
+		"application/json", strings.NewReader(string(bytesData)))
+	if err != nil {
+		clog.Error(err.Error())
+		return false
+	}
 	if resp == nil {
 		clog.Error("request to kubecube for auth failed, response is nil")
 		return false

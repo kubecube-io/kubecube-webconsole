@@ -9,10 +9,8 @@ FROM golang:1.15 as builder
 WORKDIR /go/src/kubecube-webconsole
 COPY . .
 
-RUN go mod download
-
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -mod=mod -a -o webconsole main.go
+RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -mod=vendor -a -o webconsole main.go
 
 # Copy the ripple into a thin image
 FROM debian:stretch-slim
