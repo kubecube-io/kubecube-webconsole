@@ -19,6 +19,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
+
 	logger "github.com/astaxie/beego/logs"
 	"github.com/golang/glog"
 	"github.com/kubecube-io/kubecube/pkg/clients"
@@ -26,12 +30,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
-	"kubecube-webconsole/handler"
-	"net/http"
 	_ "net/http/pprof"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"time"
+
+	"kubecube-webconsole/handler"
 )
 
 func init() {
@@ -52,6 +54,12 @@ func main() {
 		logger.Error("problem new raw k8s clientSet: %v", err)
 		return
 	}
+
+	// provide api for livenessProbe
+	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
+		logger.Debug("Health check")
+		response.WriteHeader(http.StatusOK)
+	})
 
 	rl, err := resourcelock.New(resourcelock.ConfigMapsResourceLock,
 		handler.LeaderElectionNamespace,
@@ -88,10 +96,7 @@ func main() {
 func run() {
 	http.Handle("/api/", handler.CreateHTTPAPIHandler())
 	http.Handle("/api/sockjs/", handler.CreateAttachHandler("/api/sockjs"))
-	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
-		logger.Debug("Health check")
-		response.WriteHeader(http.StatusOK)
-	})
+	// provide api for readinessProbe，avoid service flow into in-leader pod
 	http.HandleFunc("/leader", func(response http.ResponseWriter, request *http.Request) {
 		logger.Debug("This is leader")
 		response.WriteHeader(http.StatusOK)

@@ -1,3 +1,6 @@
+## Bugfix:
+- fix webcosole leader selection logic (expose healthz api)
+
 # v1.1.0
 2021-12-16
 ## Feature
