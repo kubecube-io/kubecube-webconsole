@@ -18,7 +18,7 @@ package utils
 
 import (
 	logger "github.com/astaxie/beego/logs"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"k8s.io/api/authentication/v1beta1"
 )
 
