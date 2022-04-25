@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"kubecube-webconsole/constants"
+	"github.com/kubecube-io/kubecube/pkg/utils/constants"
 	"kubecube-webconsole/errdef"
 	"kubecube-webconsole/utils"
 	"math/rand"
@@ -60,7 +60,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		return
 	}
 	// get information of pod and container in control cluster
-	v, ok := configMap.Get(constants.ControlClusterName)
+	v, ok := configMap.Get(constants.LocalCluster)
 	var cfg *rest.Config
 
 	if !ok {
@@ -112,7 +112,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		Namespace:        CloudShellNs,
 		PodName:          podName,
 		ContainerName:    containerName,
-		ClusterName:      constants.ControlClusterName,
+		ClusterName:      constants.LocalCluster,
 		UserName:         user,
 		IsControlCluster: true,
 		Token:            token,
@@ -165,7 +165,7 @@ func isPodRunning(pod v12.Pod) bool {
 }
 
 func getControlCluster() (cfg *rest.Config, err error) {
-	controlCluster, err := GetClusterInfoByName(constants.ControlClusterName)
+	controlCluster, err := GetClusterInfoByName(constants.LocalCluster)
 	if err != nil {
 		clog.Error("get control cluster err")
 		return nil, errdef.ControlClusterNotFound
