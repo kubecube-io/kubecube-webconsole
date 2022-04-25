@@ -17,6 +17,8 @@ limitations under the License.
 package kubeconfig
 
 import (
+	"io/ioutil"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -87,8 +89,10 @@ func BuildKubeConfigForUser(cms []*ConfigMeta) ([]byte, error) {
 		context := authInfo + "@" + cluster
 
 		apiConfig.Clusters[cluster] = &api.Cluster{
-			Server:                   cm.Config.Host,
-			CertificateAuthorityData: cm.Config.CAData,
+			Server: cm.Config.Host,
+			// todo: set cube ca to access auth proxy server
+			//CertificateAuthorityData: cm.Config.CAData,
+			InsecureSkipTLSVerify: true,
 		}
 
 		apiConfig.AuthInfos[authInfo] = &api.AuthInfo{
@@ -105,4 +109,8 @@ func BuildKubeConfigForUser(cms []*ConfigMeta) ([]byte, error) {
 	}
 
 	return clientcmd.Write(*apiConfig)
+}
+
+func LoadKubeConfigFromFlags(kubeconfigPath string) ([]byte, error) {
+	return ioutil.ReadFile(kubeconfigPath)
 }

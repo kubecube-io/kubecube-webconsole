@@ -30,13 +30,16 @@ const (
 	CubeNamespace = "kubecube-system"
 
 	// PivotCluster pivot cluster name
+	// Deprecated
 	PivotCluster = "pivot-cluster"
+
+	// LocalCluster the internal cluster where program stand with
+	LocalCluster = "_local_cluster"
 
 	// DefaultPivotCubeClusterIPSvc default pivot cube svc
 	DefaultPivotCubeClusterIPSvc = "kubecube.kubecube-system:7443"
 
-	// DefaultAuditSvc default audit cube svc
-	DefaultAuditSvc = "audit.kubecube-system:8888"
+	DefaultAuditURL = "http://audit.kubecube-system:8888/api/v1/cube/audit/cube"
 )
 
 // http content
@@ -44,6 +47,9 @@ const (
 	HttpHeaderContentType        = "Content-type"
 	HttpHeaderContentDisposition = "Content-Disposition"
 	HttpHeaderContentTypeOctet   = "application/octet-stream"
+
+	ImpersonateUserKey  = "Impersonate-User"
+	ImpersonateGroupKey = "Impersonate-Group"
 )
 
 // audit and user constant
@@ -52,6 +58,8 @@ const (
 	EventTypeUserWrite = "userwrite"
 	EventResourceType  = "resourceType"
 	EventAccountId     = "accountId"
+	EventObjectName    = "objectName"
+	EventRespBody      = "responseBody"
 
 	AuthorizationHeader        = "Authorization"
 	DefaultTokenExpireDuration = 3600 // 1 hour
@@ -80,6 +88,11 @@ const (
 	TenantAdminCluster  = "tenant-admin-cluster"
 	ProjectAdminCluster = "project-admin-cluster"
 	ReviewerCluster     = "reviewer-cluster"
+
+	PlatformAdminAgLabel = "rbac.authorization.k8s.io/aggregate-to-platform-admin"
+	TenantAdminAgLabel   = "rbac.authorization.k8s.io/aggregate-to-tenant-admin"
+	ProjectAdminAgLabel  = "rbac.authorization.k8s.io/aggregate-to-project-admin"
+	ReviewerAgLabel      = "rbac.authorization.k8s.io/aggregate-to-reviewer"
 )
 
 const (
@@ -97,13 +110,35 @@ const (
 
 	// RbacLabel indicates the resource of rbac is related with kubecube
 	RbacLabel = "kubecube.io/rbac"
-
 	// RoleLabel indicates the role of rbac policy
 	RoleLabel = "kubecube.io/role"
 
 	// CrdLabel indicates the crds kubecube need to dispatch
 	CrdLabel = "kubecube.io/crds"
 
-	// SyncLabel use for sync logic of warden
-	SyncLabel = "kubecube.io/sync"
+	// SyncAnnotation use for sync logic of warden
+	SyncAnnotation = "kubecube.io/sync"
+)
+
+const (
+	// CubeNodeTaint is node taint that managed by KubeCube
+	CubeNodeTaint = "node.kubecube.io"
+)
+
+// hnc related conest
+const (
+	// HncInherited means resource is inherited form upon namespace by hnc
+	HncInherited = "hnc.x-k8s.io/inherited-from"
+)
+
+// rbac role verbs
+const (
+	// AllVerb all verbs
+	AllVerb = "*"
+	// CreateVerb create resource
+	CreateVerb = "create"
+	// DeleteVerb delete resource
+	DeleteVerb = "delete"
+	// ListVerb list resource
+	ListVerb = "list"
 )
