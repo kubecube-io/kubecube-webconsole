@@ -17,14 +17,41 @@ limitations under the License.
 package multicluster
 
 import (
-	"github.com/kubecube-io/kubecube/pkg/multicluster/fake"
-	"github.com/kubecube-io/kubecube/pkg/multicluster/manager"
+	"context"
+	"github.com/kubecube-io/kubecube/pkg/multicluster/client"
+	"k8s.io/apimachinery/pkg/version"
 )
 
+// Manager access to internal cluster
+type Manager interface {
+	// Add runtime cache in memory
+	Add(cluster string, internalCluster *InternalCluster) error
+	Get(cluster string) (*InternalCluster, error)
+	Del(cluster string) error
+
+	// Version the k8s version about cluster
+	Version(cluster string) (*version.Info, error)
+
+	// FuzzyCopy return fuzzy cluster of raw
+	FuzzyCopy() map[string]*FuzzyCluster
+
+	// ScoutFor scout heartbeat for warden
+	ScoutFor(ctx context.Context, cluster string) error
+
+	// GetClient get client for cluster by name
+	GetClient(cluster string) (client.Client, error)
+
+	// ListClustersByType list clusters by given type
+	ListClustersByType(t clusterType) []*InternalCluster
+
+	// PivotCluster get pivot cluster
+	PivotCluster() *InternalCluster
+}
+
 // Interface the way to be used outside for multi cluster manager
-func Interface() manager.MultiClustersManager {
-	if fake.IsFake {
-		return fake.FakeMultiClusterMgr
+func Interface() Manager {
+	if isFake {
+		return fakeMultiClusterMgr
 	}
-	return manager.MultiClusterMgr
+	return ManagerImpl
 }
