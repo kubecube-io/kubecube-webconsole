@@ -30,7 +30,7 @@ func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, e
 		return nil, nil
 	}
 	var (
-		pivotClient = clients.Interface().Kubernetes(constants.PivotCluster)
+		pivotClient = clients.Interface().Kubernetes(constants.LocalCluster)
 		ctx         = context.Background()
 		cluster     = clusterv1.Cluster{}
 	)
