@@ -5,6 +5,8 @@
 - replace jwt version v3.2.0 to v3.2.1
 ## Bugfix:
 - fix webcosole leader selection logic (expose healthz api)
+## Dependency:
+- kubecube 1.2.0
 
 # v1.1.0
 2021-12-16
