@@ -112,7 +112,7 @@ func isNsOrPodBelongToNamespace(request *restful.Request) bool {
 	podName := request.PathParameter("pod")
 	namespace := request.PathParameter("namespace")
 	clusterName := request.PathParameter("cluster")
-	pivotClient := clients.Interface().Kubernetes(constants.PivotCluster)
+	pivotClient := clients.Interface().Kubernetes(constants.LocalCluster)
 	memberCluster := v1.Cluster{}
 	pivotClient.Cache().Get(request.Request.Context(), types.NamespacedName{Name: clusterName}, &memberCluster)
 
