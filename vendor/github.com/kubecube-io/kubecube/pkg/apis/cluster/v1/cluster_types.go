@@ -23,9 +23,26 @@ import (
 type ClusterState string
 
 const (
+	// ClusterInitFailed happened when init cluster failed
+	// generally when network error occurred
+	ClusterInitFailed ClusterState = "initFailed"
+
+	// ClusterReconnectedFailed happened when kubecube retry connect
+	// with member cluster exceed, in that state, user can delete
+	// cluster or reconnect manually
+	ClusterReconnectedFailed ClusterState = "reconnectedFailed"
+
+	// ClusterProcessing wait for cluster be taken over
 	ClusterProcessing ClusterState = "processing"
-	ClusterNormal     ClusterState = "normal"
-	ClusterAbnormal   ClusterState = "abnormal"
+
+	// ClusterDeleting means cluster is under deleting
+	ClusterDeleting ClusterState = "deleting"
+
+	// ClusterNormal represent cluster is healthy
+	ClusterNormal ClusterState = "normal"
+
+	// ClusterAbnormal represent cluster is unhealthy
+	ClusterAbnormal ClusterState = "abnormal"
 )
 
 // ClusterSpec defines the desired state of Cluster
@@ -50,6 +67,10 @@ type ClusterSpec struct {
 	// CNI the cluster used
 	// +optional
 	NetworkType string `json:"networkType,omitempty"`
+
+	// let ingress gets a domain suffix
+	// +optional
+	IngressDomainSuffix string `json:"ingressDomainSuffix,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster
