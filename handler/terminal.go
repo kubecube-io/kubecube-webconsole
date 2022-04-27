@@ -177,7 +177,7 @@ func handleTerminalSession(session sockjs.Session) {
 		cInfo:         info,
 	}
 
-	logger.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s",info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
+	logger.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s", info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
 	if err = connectToContainer(restClient, cfg, info, terminalSession); err != nil {
 		logger.Error("connect to container failed, session id: %v , error message: %v", msg.SessionID, err.Error())
 		terminalSession.Close(2, err.Error())

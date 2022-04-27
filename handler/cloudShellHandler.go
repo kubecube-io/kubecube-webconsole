@@ -61,7 +61,6 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		return
 	}
 
-
 	if err != nil || clusterInfo == nil {
 		errdef.HandleInternalErrorByCode(response, errdef.ClusterInfoNotFound)
 		return
