@@ -89,7 +89,7 @@ func (t TerminalSession) Read(p []byte) (int, error) {
 		}
 		return copy(p, msg.Data), nil
 	case "resize":
-		t.sizeChan <- remotecommand.TerminalSize{msg.Cols, msg.Rows}
+		t.sizeChan <- remotecommand.TerminalSize{Width: msg.Cols, Height: msg.Rows}
 		return 0, nil
 	default:
 		return 0, fmt.Errorf("unknown message type '%s'", msg.Op)
