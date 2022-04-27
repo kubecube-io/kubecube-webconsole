@@ -18,12 +18,15 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	clog "github.com/astaxie/beego/logs"
 	clusterv1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
 	"github.com/kubecube-io/kubecube/pkg/clients"
 	"github.com/kubecube-io/kubecube/pkg/utils/constants"
 	"k8s.io/apimachinery/pkg/types"
 )
+
+var pivotCluster *clusterv1.Cluster
 
 func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, err error) {
 	if clusterName == "" {
@@ -41,4 +44,25 @@ func GetClusterInfoByName(clusterName string) (clusterInfo *clusterv1.Cluster, e
 		return nil, err
 	}
 	return &cluster, nil
+}
+
+func GetPivotCluster() (*clusterv1.Cluster, error) {
+	if pivotCluster != nil {
+		return pivotCluster, nil
+	}
+
+	list := &clusterv1.ClusterList{}
+	if err := clients.Interface().Kubernetes(constants.LocalCluster).Cache().List(context.Background(), list); err != nil {
+		return nil, fmt.Errorf("list clusters failed")
+	}
+
+	for _, cluster := range list.Items {
+		if cluster.Spec.IsMemberCluster == false {
+			pivotCluster = &cluster
+			clog.Info("found pivot cluster %v", pivotCluster.Name)
+			return pivotCluster, nil
+		}
+	}
+
+	return nil, fmt.Errorf("can not found pivot cluster")
 }
