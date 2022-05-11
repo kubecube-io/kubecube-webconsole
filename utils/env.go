@@ -23,7 +23,7 @@ func GetKubeCubeSvc() string {
 	if svc != "" {
 		return svc
 	}
-	return "kubecube-nodeport.kubecube-system:7443"
+	return "kubecube-nodeport:7443"
 }
 
 func getJwtSecret() string {
