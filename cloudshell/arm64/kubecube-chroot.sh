@@ -53,7 +53,7 @@ if [ ! -d $DIR ]; then
 fi
 
 ## wget download kubeconfig
-wget --header="Authorization: Bearer $TOKEN"  "https://kubecube.kubecube-system:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 &>/dev/null --no-check-certificate
+wget --header="Authorization: Bearer $TOKEN"  "https://kubecube.$KUBECUBE_NAMESPACE:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 &>/dev/null --no-check-certificate
 # check whether kubeconfig download success
 if [ $? -ne 0 ]; then
     exit 1
