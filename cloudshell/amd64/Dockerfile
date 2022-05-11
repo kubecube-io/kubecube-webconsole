@@ -3,6 +3,6 @@
 # that can be found in the LICENSE file.
 
 FROM hub.c.163.com/kubecube/ubuntu:16.04-tools
-COPY ./kubecube-chroot.sh /kubecube-chroot.sh
-COPY ./kubectl /bin/kubectl
+COPY ./amd64/kubecube-chroot.sh /kubecube-chroot.sh
+COPY ./amd64/kubectl /bin/kubectl
 RUN chmod +x /kubecube-chroot.sh
