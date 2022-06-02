@@ -227,14 +227,13 @@ func connectToContainer(k8sClient *rest.RESTClient, cfg *rest.Config, info *Conn
 	// connect to control service
 	var req *rest.Request
 	if info.IsControlCluster {
-		cmds := []string{KubeCubeChrootShPath, "-u", info.UserName, "-c", info.ClusterName}
+		cmds := []string{KubeCubeChrootShPath, "-c", info.ClusterName}
 		for k, values := range info.Header {
 			for _, value := range values {
 				cmds = append(cmds, "-h")
 				cmds = append(cmds, k+":"+value)
 			}
 		}
-		clog.Info("==========cmds: %s", cmds)
 		req = k8sClient.Post().
 			Resource("pods").
 			Name(podName).

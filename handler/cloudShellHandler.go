@@ -35,15 +35,6 @@ import (
 )
 
 func handleCloudShellExec(request *restful.Request, response *restful.Response) {
-	// check user simply
-	h := GetProvider()
-	user, err := h.Authenticate(request.Request.Header)
-	if err != nil || user == nil {
-		clog.Warn("generic auth error: %v", err)
-		errdef.HandleInternalErrorByCode(response, *errdef.InvalidToken)
-		return
-	}
-
 	// check cluster exists
 	clusterName := request.PathParameter("cluster")
 	clusterInfo, err := GetClusterInfoByName(clusterName)
@@ -112,7 +103,6 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		PodName:          podName,
 		ContainerName:    containerName,
 		ClusterName:      ctrlCluster.GetName(),
-		UserName:         user.GetUserName(),
 		IsControlCluster: true,
 		Header:           request.Request.Header,
 	}

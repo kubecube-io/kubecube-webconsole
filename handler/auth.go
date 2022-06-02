@@ -23,7 +23,6 @@ import (
 	clog "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
 	v1 "github.com/kubecube-io/kubecube/pkg/apis/cluster/v1"
-	"github.com/kubecube-io/kubecube/pkg/authentication/identityprovider/generic"
 	"github.com/kubecube-io/kubecube/pkg/clients"
 	"github.com/kubecube-io/kubecube/pkg/utils/constants"
 	"github.com/kubecube-io/kubecube/pkg/utils/kubeconfig"
@@ -137,12 +136,4 @@ func isNsOrPodBelongToNamespace(request *restful.Request) bool {
 		return true
 	}
 	return false
-}
-
-func GetProvider() *generic.HeaderProvider {
-	if Provider != nil {
-		return Provider
-	}
-	return &generic.HeaderProvider{URL: *authUrl, Method: *authMethod, Scheme: *authScheme,
-		InsecureSkipVerify: *authInsecureSkipVerify, TLSCert: *authTLSCert, TLSKey: *authTLSKey}
 }

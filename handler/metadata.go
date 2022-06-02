@@ -61,7 +61,6 @@ type ConnInfo struct {
 	ScriptUID     string `json:"scriptUID"`  // the userid used by the script in the container
 	// the user permission level used by the script in the container is customized by the user, such as dev, ops, admin
 	ScriptUserAuth   string        `json:"scriptUserAuth"`
-	UserName         string        `json:"userName"`
 	IsControlCluster bool          `json:"isControlCluster"`
 	AuditRawInfo     *AuditRawInfo `json:"audit_raw_info,omitempty"`
 	Header           http.Header   `json:"header,omitempty"`
@@ -85,21 +84,15 @@ var (
 )
 
 var (
-	ServerPort             = flag.Int("serverPort", 9081, "set server port")
-	scriptName             = flag.String("scriptName", "/init.sh", "script name with full path in container")
-	cloudShellDpName       = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")
-	appNamespace           = flag.String("appNamespace", "kubecube-system", "namespace of cloud shell deployment, default same as kubecube-system")
-	enableAudit            = flag.Bool("enableAudit", true, "enable audit function")
-	enableStdoutAudit      = flag.Bool("enableStdoutAudit", false, "enable stdout audit")
-	auditURL               = flag.String("auditURL", "http://audit.kubecube-system:8888/api/v1/cube/audit/cube", "send audit message to the url")
-	auditMethod            = flag.String("auditMethod", "POST", "send audit message request method")
-	auditHeader            = flag.String("auditHeader", "Content-Type=application/json;charset=UTF-8", "send audit message request header")
-	authUrl                = flag.String("authUrl", "https://kubecube-ultimate.test203-qingzhou.com/api/v1/cube-ultimate/auth", "")
-	authMethod             = flag.String("authMethod", "GET", "")
-	authScheme             = flag.String("authScheme", "https", "")
-	authInsecureSkipVerify = flag.Bool("authInsecureSkipVerify", true, "")
-	authTLSCert            = flag.String("authTLSCert", "", "")
-	authTLSKey             = flag.String("authTLSKey", "", "")
+	ServerPort        = flag.Int("serverPort", 9081, "set server port")
+	scriptName        = flag.String("scriptName", "/init.sh", "script name with full path in container")
+	cloudShellDpName  = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")
+	appNamespace      = flag.String("appNamespace", "kubecube-system", "namespace of cloud shell deployment, default same as kubecube-system")
+	enableAudit       = flag.Bool("enableAudit", true, "enable audit function")
+	enableStdoutAudit = flag.Bool("enableStdoutAudit", false, "enable stdout audit")
+	auditURL          = flag.String("auditURL", "http://audit.kubecube-system:8888/api/v1/cube/audit/cube", "send audit message to the url")
+	auditMethod       = flag.String("auditMethod", "POST", "send audit message request method")
+	auditHeader       = flag.String("auditHeader", "Content-Type=application/json;charset=UTF-8", "send audit message request header")
 )
 
 // TerminalSession implements PtyHandler (using a SockJS connection)
