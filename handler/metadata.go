@@ -23,6 +23,7 @@ import (
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"io"
 	"k8s.io/client-go/tools/remotecommand"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -63,7 +64,7 @@ type ConnInfo struct {
 	UserName         string        `json:"userName"`
 	IsControlCluster bool          `json:"isControlCluster"`
 	AuditRawInfo     *AuditRawInfo `json:"audit_raw_info,omitempty"`
-	Token            string        `json:"token,omitempty"`
+	Header           http.Header   `json:"header,omitempty"`
 }
 
 type AuditRawInfo struct {
@@ -84,15 +85,21 @@ var (
 )
 
 var (
-	ServerPort        = flag.Int("serverPort", 9081, "set server port")
-	scriptName        = flag.String("scriptName", "/init.sh", "script name with full path in container")
-	cloudShellDpName  = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")
-	appNamespace      = flag.String("appNamespace", "kubecube-system", "namespace of cloud shell deployment, default same as kubecube-system")
-	enableAudit       = flag.Bool("enableAudit", true, "enable audit function")
-	enableStdoutAudit = flag.Bool("enableStdoutAudit", false, "enable stdout audit")
-	auditURL          = flag.String("auditURL", "http://audit.kubecube-system:8888/api/v1/cube/audit/cube", "send audit message to the url")
-	auditMethod       = flag.String("auditMethod", "POST", "send audit message request method")
-	auditHeader       = flag.String("auditHeader", "Content-Type=application/json;charset=UTF-8", "send audit message request header")
+	ServerPort             = flag.Int("serverPort", 9081, "set server port")
+	scriptName             = flag.String("scriptName", "/init.sh", "script name with full path in container")
+	cloudShellDpName       = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")
+	appNamespace           = flag.String("appNamespace", "kubecube-system", "namespace of cloud shell deployment, default same as kubecube-system")
+	enableAudit            = flag.Bool("enableAudit", true, "enable audit function")
+	enableStdoutAudit      = flag.Bool("enableStdoutAudit", false, "enable stdout audit")
+	auditURL               = flag.String("auditURL", "http://audit.kubecube-system:8888/api/v1/cube/audit/cube", "send audit message to the url")
+	auditMethod            = flag.String("auditMethod", "POST", "send audit message request method")
+	auditHeader            = flag.String("auditHeader", "Content-Type=application/json;charset=UTF-8", "send audit message request header")
+	authUrl                = flag.String("authUrl", "https://kubecube-ultimate.test203-qingzhou.com/api/v1/cube-ultimate/auth", "")
+	authMethod             = flag.String("authMethod", "GET", "")
+	authScheme             = flag.String("authScheme", "https", "")
+	authInsecureSkipVerify = flag.Bool("authInsecureSkipVerify", true, "")
+	authTLSCert            = flag.String("authTLSCert", "", "")
+	authTLSKey             = flag.String("authTLSKey", "", "")
 )
 
 // TerminalSession implements PtyHandler (using a SockJS connection)

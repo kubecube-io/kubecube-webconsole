@@ -22,6 +22,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/emicklei/go-restful"
+	"github.com/kubecube-io/kubecube/pkg/authentication/identityprovider/generic"
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"github.com/patrickmn/go-cache"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
@@ -36,6 +37,8 @@ import (
 )
 
 const PlatformKubeCube = "kubecube"
+
+var Provider *generic.HeaderProvider
 
 func init() {
 	clog.Info("webconsole initializing")
@@ -127,8 +130,10 @@ func cacheConnInfo(sessionId string, info *ConnInfo) {
 }
 
 func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
-	user := utils.GetUserFromReq(request)
-	if user == "" {
+	h := GetProvider()
+	user, err := h.Authenticate(request.Request.Header)
+	if err != nil || user == nil {
+		clog.Warn("generic auth error: %v", err)
 		return nil, errdef.InvalidToken
 	}
 	clusterName := request.PathParameter("cluster")
@@ -159,7 +164,7 @@ func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
 	}
 
 	return &ConnInfo{
-		UserName:       user,
+		UserName:       user.GetUserName(),
 		Namespace:      namespace,
 		PodName:        podName,
 		ContainerName:  containerName,

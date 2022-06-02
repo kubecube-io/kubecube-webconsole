@@ -74,6 +74,9 @@ github.com/kubecube-io/kubecube/pkg/apis/hotplug/v1
 github.com/kubecube-io/kubecube/pkg/apis/quota/v1
 github.com/kubecube-io/kubecube/pkg/apis/tenant/v1
 github.com/kubecube-io/kubecube/pkg/apis/user/v1
+github.com/kubecube-io/kubecube/pkg/authentication
+github.com/kubecube-io/kubecube/pkg/authentication/identityprovider
+github.com/kubecube-io/kubecube/pkg/authentication/identityprovider/generic
 github.com/kubecube-io/kubecube/pkg/clients
 github.com/kubecube-io/kubecube/pkg/clog
 github.com/kubecube-io/kubecube/pkg/conversion

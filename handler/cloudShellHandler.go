@@ -36,18 +36,11 @@ import (
 
 func handleCloudShellExec(request *restful.Request, response *restful.Response) {
 	// check user simply
-	token := utils.GetTokenFromReq(request)
-	var user string
-	if token != "" {
-		claims := utils.ParseToken(token)
-		if claims != nil {
-			user = claims.UserInfo.Username
-		}
-	}
-
-	if user == "" || token == "" {
-		clog.Error("user is not exist")
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
+	h := GetProvider()
+	user, err := h.Authenticate(request.Request.Header)
+	if err != nil || user == nil {
+		clog.Warn("generic auth error: %v", err)
+		errdef.HandleInternalErrorByCode(response, *errdef.InvalidToken)
 		return
 	}
 
@@ -61,7 +54,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		return
 	}
 
-	if err != nil || clusterInfo == nil {
+	if clusterInfo == nil {
 		errdef.HandleInternalErrorByCode(response, errdef.ClusterInfoNotFound)
 		return
 	}
@@ -119,9 +112,9 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		PodName:          podName,
 		ContainerName:    containerName,
 		ClusterName:      ctrlCluster.GetName(),
-		UserName:         user,
+		UserName:         user.GetUserName(),
 		IsControlCluster: true,
-		Token:            token,
+		Header:           request.Request.Header,
 	}
 
 	connInfoBytes, _ := json.Marshal(shellConnInfo)

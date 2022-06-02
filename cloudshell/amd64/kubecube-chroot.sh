@@ -1,6 +1,8 @@
 #!/bin/bash
 
-while getopts "u:c:t:" opt; do
+declare -a headers
+i=0
+while getopts "u:c:h:" opt; do
   case $opt in
     u)
       USERNAME=$OPTARG
@@ -8,15 +10,15 @@ while getopts "u:c:t:" opt; do
     c)
       CLUSTER=$OPTARG
       ;;
-    t)
-      TOKEN=$OPTARG
+    h)
+      headers[$i]=$OPTARG
+      let i+=1
       ;;
     \?)
       echo "Invalid option: -$OPTARG"
       ;;
   esac
 done
-
 DIR=$HOME/$USERNAME-$CLUSTER
 TMP_CONFIG_NAME=$(cat /proc/sys/kernel/random/uuid)
 
@@ -53,7 +55,13 @@ if [ ! -d $DIR ]; then
 fi
 
 ## wget download kubeconfig
-wget --header="Authorization: Bearer $TOKEN"  "https://kubecube.$KUBECUBE_NAMESPACE:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 &>/dev/null --no-check-certificate
+url=""
+for header in "${headers[@]}"
+  do
+    url="$url --header $header"
+done
+echo $url
+wget "$url https://kubecube.$KUBECUBE_NAMESPACE:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 &>/dev/null --no-check-certificate
 # check whether kubeconfig download success
 if [ $? -ne 0 ]; then
     exit 1
