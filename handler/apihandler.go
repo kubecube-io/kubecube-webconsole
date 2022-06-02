@@ -22,7 +22,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/emicklei/go-restful"
-	"github.com/kubecube-io/kubecube/pkg/authentication/identityprovider/generic"
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"github.com/patrickmn/go-cache"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
@@ -37,8 +36,6 @@ import (
 )
 
 const PlatformKubeCube = "kubecube"
-
-var Provider *generic.HeaderProvider
 
 func init() {
 	clog.Info("webconsole initializing")
