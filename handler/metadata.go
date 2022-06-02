@@ -23,6 +23,7 @@ import (
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"io"
 	"k8s.io/client-go/tools/remotecommand"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -60,10 +61,9 @@ type ConnInfo struct {
 	ScriptUID     string `json:"scriptUID"`  // the userid used by the script in the container
 	// the user permission level used by the script in the container is customized by the user, such as dev, ops, admin
 	ScriptUserAuth   string        `json:"scriptUserAuth"`
-	UserName         string        `json:"userName"`
 	IsControlCluster bool          `json:"isControlCluster"`
 	AuditRawInfo     *AuditRawInfo `json:"audit_raw_info,omitempty"`
-	Token            string        `json:"token,omitempty"`
+	Header           http.Header   `json:"header,omitempty"`
 }
 
 type AuditRawInfo struct {

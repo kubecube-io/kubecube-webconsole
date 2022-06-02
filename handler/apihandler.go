@@ -127,10 +127,6 @@ func cacheConnInfo(sessionId string, info *ConnInfo) {
 }
 
 func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
-	user := utils.GetUserFromReq(request)
-	if user == "" {
-		return nil, errdef.InvalidToken
-	}
 	clusterName := request.PathParameter("cluster")
 	namespace := request.PathParameter("namespace")
 	podName := request.PathParameter("pod")
@@ -159,7 +155,6 @@ func getConnInfo(request *restful.Request) (*ConnInfo, *errdef.ErrorInfo) {
 	}
 
 	return &ConnInfo{
-		UserName:       user,
 		Namespace:      namespace,
 		PodName:        podName,
 		ContainerName:  containerName,

@@ -35,22 +35,6 @@ import (
 )
 
 func handleCloudShellExec(request *restful.Request, response *restful.Response) {
-	// check user simply
-	token := utils.GetTokenFromReq(request)
-	var user string
-	if token != "" {
-		claims := utils.ParseToken(token)
-		if claims != nil {
-			user = claims.UserInfo.Username
-		}
-	}
-
-	if user == "" || token == "" {
-		clog.Error("user is not exist")
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
-		return
-	}
-
 	// check cluster exists
 	clusterName := request.PathParameter("cluster")
 	clusterInfo, err := GetClusterInfoByName(clusterName)
@@ -60,15 +44,13 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		errdef.HandleInternalError(response, err)
 		return
 	}
-
-	if err != nil || clusterInfo == nil {
+	if clusterInfo == nil {
 		errdef.HandleInternalErrorByCode(response, errdef.ClusterInfoNotFound)
 		return
 	}
 	// get information of pod and container in control cluster
 	v, ok := configMap.Get(constants.LocalCluster)
 	var cfg *rest.Config
-
 	if !ok {
 		NCfg, err := getControlCluster()
 		if err != nil {
@@ -83,7 +65,6 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	}
 
 	controlRestClient, err := rest.RESTClientFor(cfg)
-
 	if err != nil {
 		clog.Info("Fail to new rest client from control pane cluster kube config data, from cfg: %#v", cfg)
 		errdef.HandleInternalErrorByCode(response, errdef.InternalServerError)
@@ -119,9 +100,8 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		PodName:          podName,
 		ContainerName:    containerName,
 		ClusterName:      ctrlCluster.GetName(),
-		UserName:         user,
 		IsControlCluster: true,
-		Token:            token,
+		Header:           request.Request.Header,
 	}
 
 	connInfoBytes, _ := json.Marshal(shellConnInfo)
