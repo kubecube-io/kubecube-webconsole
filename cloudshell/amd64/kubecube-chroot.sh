@@ -11,7 +11,7 @@ while getopts "u:c:h:" opt; do
       CLUSTER=$OPTARG
       ;;
     h)
-      headers[$i]=$OPTARG
+      headers[$i]="--header=$OPTARG"
       let i+=1
       ;;
     \?)
@@ -60,7 +60,7 @@ for header in "${headers[@]}"
   do
     url="$url --header '$header'"
 done
-wget "$url https://kubecube:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 --no-check-certificate &>/dev/null
+wget -d "${headers[@]}" "$url https://kubecube:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 --no-check-certificate &>/dev/null
 # check whether kubeconfig download success
 if [ $? -ne 0 ]; then
     exit 1
