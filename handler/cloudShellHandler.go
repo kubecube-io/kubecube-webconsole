@@ -44,7 +44,6 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 		errdef.HandleInternalError(response, err)
 		return
 	}
-
 	if clusterInfo == nil {
 		errdef.HandleInternalErrorByCode(response, errdef.ClusterInfoNotFound)
 		return
@@ -52,7 +51,6 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	// get information of pod and container in control cluster
 	v, ok := configMap.Get(constants.LocalCluster)
 	var cfg *rest.Config
-
 	if !ok {
 		NCfg, err := getControlCluster()
 		if err != nil {
@@ -67,7 +65,6 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	}
 
 	controlRestClient, err := rest.RESTClientFor(cfg)
-
 	if err != nil {
 		clog.Info("Fail to new rest client from control pane cluster kube config data, from cfg: %#v", cfg)
 		errdef.HandleInternalErrorByCode(response, errdef.InternalServerError)
