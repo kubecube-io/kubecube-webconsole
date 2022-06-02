@@ -58,10 +58,9 @@ fi
 url=""
 for header in "${headers[@]}"
   do
-    url="$url --header $header"
+    url="$url --header '$header'"
 done
-echo $url
-wget "$url https://kubecube.$KUBECUBE_NAMESPACE:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 &>/dev/null --no-check-certificate
+wget "$url https://kubecube:7443/api/v1/cube/user/kubeconfigs?user=$USERNAME" -O $DIR/tmp/$TMP_CONFIG_NAME-base64 --no-check-certificate &>/dev/null
 # check whether kubeconfig download success
 if [ $? -ne 0 ]; then
     exit 1
