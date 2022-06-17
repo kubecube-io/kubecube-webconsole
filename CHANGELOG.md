@@ -1,8 +1,9 @@
-# v1.3.0(未打tag)
+# v1.2.1
+2022-6-17
 ## Enhance:
 - cloudshell shell: fix auth for kubecube
 ## Dependency:
-- kubecube 1.2.2
+- kubecube 1.2.1
 
 # v1.2.0
 2022-4-26
