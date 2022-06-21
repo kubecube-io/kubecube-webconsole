@@ -168,9 +168,10 @@ func main() {
 		server: &http.Server{
 			Addr: fmt.Sprintf(":%d", *handler.ServerPort),
 		},
-		subStopCn: make(chan struct{}, 1),
-		subExitCh: make(chan struct{}, 1),
-		phase:     initPhase,
+		subStopCn:    make(chan struct{}),
+		subExitCh:    make(chan struct{}),
+		masterExitCh: make(chan struct{}),
+		phase:        initPhase,
 	}
 
 	rl, err := resourcelock.New(resourcelock.ConfigMapsResourceLock,
