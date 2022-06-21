@@ -1,3 +1,8 @@
+# v1.2.2
+2022-6-21
+## Bugfix:
+- fix leader election logic
+
 # v1.2.1
 2022-6-17
 ## Enhance:
