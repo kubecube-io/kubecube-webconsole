@@ -1,3 +1,10 @@
+# v1.2.2
+2022-6-22
+## Bugfix:
+- fix leader election logic
+## Enhance:
+- add .gitignore file
+
 # v1.2.1
 2022-6-17
 ## Enhance:
