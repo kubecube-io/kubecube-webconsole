@@ -36,6 +36,9 @@ import (
 	"kubecube-webconsole/handler"
 )
 
+// leader flag
+var leader = false
+
 func init() {
 	clients.InitCubeClientSetWithOpts(nil)
 }
@@ -55,11 +58,7 @@ func main() {
 		return
 	}
 
-	// provide api for livenessProbe
-	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
-		logger.Debug("Health check")
-		response.WriteHeader(http.StatusOK)
-	})
+	runAPIServer()
 
 	rl, err := resourcelock.New(resourcelock.ConfigMapsResourceLock,
 		handler.LeaderElectionNamespace,
@@ -79,9 +78,10 @@ func main() {
 		RetryPeriod:   2 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(ctx context.Context) {
-				run()
+				leader = true
 			},
 			OnStoppedLeading: func() {
+				leader = false
 				glog.Infoln("leader election lost")
 			},
 		},
@@ -90,20 +90,29 @@ func main() {
 		glog.Errorf("leader election fail, be member")
 	}
 	le.Run(context.Background())
-
 }
 
-func run() {
+func runAPIServer() {
+	// provide api for livenessProbe
+	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
+		logger.Debug("Health check")
+		response.WriteHeader(http.StatusOK)
+	})
 	http.Handle("/api/", handler.CreateHTTPAPIHandler())
 	http.Handle("/api/sockjs/", handler.CreateAttachHandler("/api/sockjs"))
 	// provide api for readinessProbe，avoid service flow into in-leader pod
 	http.HandleFunc("/leader", func(response http.ResponseWriter, request *http.Request) {
-		logger.Debug("This is leader")
-		response.WriteHeader(http.StatusOK)
+		statusCode := http.StatusOK
+		if !leader {
+			statusCode = http.StatusBadRequest
+		}
+		response.WriteHeader(statusCode)
 	})
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
-	if err != nil {
-		logger.Critical("ListenAndServe failed，error msg: %s", err.Error())
-	}
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
+		if err != nil {
+			logger.Critical("ListenAndServe failed，error msg: %s", err.Error())
+		}
+	}()
 }
