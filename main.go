@@ -33,8 +33,8 @@ import (
 	_ "net/http/pprof"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	consolelog "kubecube-webconsole/clog"
 	"kubecube-webconsole/handler"
-	"kubecube-webconsole/options/flags"
 )
 
 // leader flag
@@ -45,7 +45,7 @@ func init() {
 }
 
 func main() {
-	clog.InitCubeLoggerWithOpts(flags.Opts.LoggerOpts)
+	clog.InitCubeLoggerWithOpts(consolelog.NewLogConfig())
 	// hostname is the key to select the master, so it must be terminated if it fails
 	hostname, err := os.Hostname()
 	if err != nil {
