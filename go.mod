@@ -10,6 +10,7 @@ require (
 	github.com/kubecube-io/kubecube v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
+	github.com/urfave/cli/v2 v2.3.0
 	gopkg.in/igm/sockjs-go.v2 v2.1.0
 	k8s.io/api v0.23.2
 	k8s.io/apimachinery v0.23.2
