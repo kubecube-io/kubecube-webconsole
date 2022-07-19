@@ -41,7 +41,7 @@ var (
 func (ei ErrorInfo) WithMarshal() []byte {
 	res, err := json.Marshal(ei)
 	if err != nil {
-		logger.Error("Json marshal failed, %s", err.Error())
+		clog.Error("Json marshal failed, %s", err.Error())
 	}
 	return res
 }

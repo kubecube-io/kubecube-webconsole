@@ -28,7 +28,7 @@ import (
 
 // HandleInternalError writes the given error to the response and sets appropriate HTTP status headers.
 func HandleInternalError(response *restful.Response, err error) {
-	logger.Error(err)
+	clog.Error(err)
 	statusCode := http.StatusInternalServerError
 	statusError, ok := err.(*errors.StatusError)
 	if ok && statusError.Status().Code > 0 {
@@ -39,7 +39,7 @@ func HandleInternalError(response *restful.Response, err error) {
 }
 
 func HandleInternalErrorByCode(response *restful.Response, errCode ErrorInfo) {
-	logger.Error(errCode)
+	clog.Error(errCode)
 	response.AddHeader("Content-Type", "text/plain")
 	msg, _ := json.Marshal(errCode)
 	response.WriteErrorString(errCode.Code, string(msg))
