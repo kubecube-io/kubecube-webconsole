@@ -95,7 +95,7 @@ func main() {
 func runAPIServer() {
 	// provide api for livenessProbe
 	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
-		logger.Debug("Health check")
+		clog.Debug("Health check")
 		response.WriteHeader(http.StatusOK)
 	})
 	http.Handle("/api/", handler.CreateHTTPAPIHandler())
