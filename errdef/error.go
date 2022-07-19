@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	logger "github.com/astaxie/beego/logs"
+	"github.com/kubecube-io/kubecube/pkg/clog"
 )
 
 type ErrorInfo struct {

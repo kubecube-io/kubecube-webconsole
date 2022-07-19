@@ -17,8 +17,8 @@ limitations under the License.
 package utils
 
 import (
-	logger "github.com/astaxie/beego/logs"
 	"github.com/golang-jwt/jwt"
+	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/api/authentication/v1beta1"
 )
 

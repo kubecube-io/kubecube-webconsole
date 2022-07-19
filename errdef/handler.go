@@ -17,18 +17,17 @@ limitations under the License.
 package errdef
 
 import (
+	"encoding/json"
 	"net/http"
 
-	"encoding/json"
-
-	logger "github.com/astaxie/beego/logs"
 	"github.com/emicklei/go-restful"
+	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 // HandleInternalError writes the given error to the response and sets appropriate HTTP status headers.
 func HandleInternalError(response *restful.Response, err error) {
-	clog.Error(err)
+	clog.Error("%v", err)
 	statusCode := http.StatusInternalServerError
 	statusError, ok := err.(*errors.StatusError)
 	if ok && statusError.Status().Code > 0 {
@@ -39,7 +38,7 @@ func HandleInternalError(response *restful.Response, err error) {
 }
 
 func HandleInternalErrorByCode(response *restful.Response, errCode ErrorInfo) {
-	clog.Error(errCode)
+	clog.Error("%v", errCode)
 	response.AddHeader("Content-Type", "text/plain")
 	msg, _ := json.Marshal(errCode)
 	response.WriteErrorString(errCode.Code, string(msg))
