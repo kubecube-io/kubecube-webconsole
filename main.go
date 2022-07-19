@@ -18,13 +18,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	consolelog "kubecube-webconsole/clog"
 	"net/http"
 	"os"
 	"time"
 
-	logger "github.com/astaxie/beego/logs"
 	"github.com/kubecube-io/kubecube/pkg/clients"
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/client-go/kubernetes"
@@ -40,6 +40,7 @@ import (
 var leader = false
 
 func init() {
+	flag.Parse()
 	clients.InitCubeClientSetWithOpts(nil)
 	clog.InitCubeLoggerWithOpts(consolelog.NewLogConfig())
 }
@@ -111,7 +112,8 @@ func runAPIServer() {
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
 		if err != nil {
-			logger.Critical("ListenAndServe failed，error msg: %s", err.Error())
+			clog.Error("ListenAndServe failed，error msg: %s", err.Error())
+			panic(err)
 		}
 	}()
 }

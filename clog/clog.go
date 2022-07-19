@@ -22,26 +22,26 @@ import (
 )
 
 var (
-	logFile         = *flag.String("log-file", "/etc/logs/cube.log", "")
-	maxSize         = *flag.Int("max-size", 1000, "")
-	maxBackups      = *flag.Int("max-backups", 7, "")
-	maxAge          = *flag.Int("max-age", 1, "")
-	compress        = *flag.Bool("compress", true, "")
-	logLevel        = *flag.String("log-level", "info", "")
-	jsonEncode      = *flag.Bool("json-encode", false, "")
-	stacktraceLevel = *flag.String("stacktrace-level", "error", "")
+	logFile         = flag.String("log-file", "/etc/logs/cube.log", "")
+	maxSize         = flag.Int("max-size", 1000, "")
+	maxBackups      = flag.Int("max-backups", 7, "")
+	maxAge          = flag.Int("max-age", 1, "")
+	compress        = flag.Bool("compress", true, "")
+	logLevel        = flag.String("log-level", "info", "")
+	jsonEncode      = flag.Bool("json-encode", false, "")
+	stacktraceLevel = flag.String("stacktrace-level", "error", "")
 )
 
 func NewLogConfig() *clog.Config {
 	flag.Parse()
 	return &clog.Config{
-		LogFile:         logFile,
-		MaxSize:         maxSize,
-		MaxBackups:      maxBackups,
-		MaxAge:          maxAge,
-		Compress:        compress,
-		LogLevel:        logLevel,
-		JsonEncode:      jsonEncode,
-		StacktraceLevel: stacktraceLevel,
+		LogFile:         *logFile,
+		MaxSize:         *maxSize,
+		MaxBackups:      *maxBackups,
+		MaxAge:          *maxAge,
+		Compress:        *compress,
+		LogLevel:        *logLevel,
+		JsonEncode:      *jsonEncode,
+		StacktraceLevel: *stacktraceLevel,
 	}
 }

@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	logger "github.com/astaxie/beego/logs"
 	"k8s.io/klog/v2"
 	"time"
 
@@ -177,7 +176,7 @@ func handleTerminalSession(session sockjs.Session) {
 		cInfo:         info,
 	}
 
-	logger.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s", info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
+	clog.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s", info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
 	if err = connectToContainer(restClient, cfg, info, terminalSession); err != nil {
 		clog.Error("connect to container failed, session id: %v , error message: %v", msg.SessionID, err.Error())
 		terminalSession.Close(2, err.Error())
@@ -291,7 +290,7 @@ func connectToContainer(k8sClient *rest.RESTClient, cfg *rest.Config, info *Conn
 		req = req.VersionedParams(&v1.PodExecOptions{
 			Command: cmds,
 		}, scheme.ParameterCodec)
-		logger.Info("try to connect to container with cmds: %v", cmds)
+		clog.Info("try to connect to container with cmds: %v", cmds)
 		shErr := postReq(req, cfg, ptyHandler)
 		if shErr != nil {
 			clog.Error("connect to pod %v failed, %v", podName, err)
@@ -340,7 +339,7 @@ func buildCMD(info *ConnInfo) []string {
 		cmds = []string{"/bin/bash"}
 	}
 
-	logger.Info("try to connect to container with cmds: %v", cmds)
+	clog.Info("try to connect to container with cmds: %v", cmds)
 
 	return cmds
 }

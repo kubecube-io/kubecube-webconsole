@@ -19,7 +19,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"github.com/emicklei/go-restful"
 	"github.com/kubecube-io/kubecube/pkg/clog"
@@ -39,7 +38,6 @@ const PlatformKubeCube = "kubecube"
 
 func init() {
 	clog.Info("webconsole initializing")
-	flag.Parse()
 
 	initConfig()
 	initAudit()

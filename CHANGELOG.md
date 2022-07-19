@@ -1,3 +1,8 @@
+# v1.2.3
+2022-7-19
+## Enhance:
+- expose log config
+
 # v1.2.2
 2022-6-22
 ## Bugfix:
