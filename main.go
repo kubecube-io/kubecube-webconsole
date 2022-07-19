@@ -19,12 +19,12 @@ package main
 import (
 	"context"
 	"fmt"
+	consolelog "kubecube-webconsole/clog"
 	"net/http"
 	"os"
 	"time"
 
 	logger "github.com/astaxie/beego/logs"
-	"github.com/golang/glog"
 	"github.com/kubecube-io/kubecube/pkg/clients"
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/client-go/kubernetes"
@@ -33,7 +33,6 @@ import (
 	_ "net/http/pprof"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	consolelog "kubecube-webconsole/clog"
 	"kubecube-webconsole/handler"
 )
 
@@ -42,19 +41,19 @@ var leader = false
 
 func init() {
 	clients.InitCubeClientSetWithOpts(nil)
+	clog.InitCubeLoggerWithOpts(consolelog.NewLogConfig())
 }
 
 func main() {
-	clog.InitCubeLoggerWithOpts(consolelog.NewLogConfig())
 	// hostname is the key to select the master, so it must be terminated if it fails
 	hostname, err := os.Hostname()
 	if err != nil {
-		glog.Fatalf("failed to get hostname: %v", err)
+		panic(err)
 	}
 
 	client, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
 	if err != nil {
-		logger.Error("problem new raw k8s clientSet: %v", err)
+		clog.Error("problem new raw k8s clientSet: %v", err)
 		return
 	}
 
@@ -68,7 +67,7 @@ func main() {
 			Identity: hostname,
 		})
 	if err != nil {
-		glog.Errorf("error creating lock: %v", err)
+		clog.Error("error creating lock: %v", err)
 	}
 
 	le, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
@@ -82,12 +81,12 @@ func main() {
 			},
 			OnStoppedLeading: func() {
 				leader = false
-				glog.Infoln("leader election lost")
+				clog.Info("leader election lost")
 			},
 		},
 	})
 	if err != nil {
-		glog.Errorf("leader election fail, be member")
+		clog.Error("leader election fail, be member")
 	}
 	le.Run(context.Background())
 }

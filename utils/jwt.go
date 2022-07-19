@@ -40,7 +40,7 @@ func ParseToken(token string) *Claims {
 		return []byte(jwtSecret), nil
 	})
 	if err != nil {
-		logger.Error("parse token error: %s", err)
+		clog.Error("parse token error: %s", err)
 		return nil
 	}
 	if claims, ok := newToken.Claims.(*Claims); ok && newToken.Valid {
