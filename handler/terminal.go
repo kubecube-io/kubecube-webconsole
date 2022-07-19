@@ -60,7 +60,7 @@ func (t TerminalSession) Read(p []byte) (int, error) {
 
 	switch msg.Op {
 	case "stdin":
-		logger.Debug("[%v] stdin msg.Data content bytes: %v", t.id, []byte(msg.Data))
+		clog.Debug("[%v] stdin msg.Data content bytes: %v", t.id, []byte(msg.Data))
 		if !*enableAudit {
 			return copy(p, msg.Data), nil
 		}
