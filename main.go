@@ -34,6 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"kubecube-webconsole/handler"
+	"kubecube-webconsole/options/flags"
 )
 
 // leader flag
@@ -44,8 +45,7 @@ func init() {
 }
 
 func main() {
-
-	clog.InitCubeLoggerWithOpts(&clog.Config{LogLevel: "info", StacktraceLevel: "error"})
+	clog.InitCubeLoggerWithOpts(flags.Opts.LoggerOpts)
 	// hostname is the key to select the master, so it must be terminated if it fails
 	hostname, err := os.Hostname()
 	if err != nil {
