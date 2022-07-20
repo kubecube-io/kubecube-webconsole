@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	logger "github.com/astaxie/beego/logs"
 	"k8s.io/klog/v2"
 	"time"
 
@@ -60,7 +59,7 @@ func (t TerminalSession) Read(p []byte) (int, error) {
 
 	switch msg.Op {
 	case "stdin":
-		logger.Debug("[%v] stdin msg.Data content bytes: %v", t.id, []byte(msg.Data))
+		clog.Debug("[%v] stdin msg.Data content bytes: %v", t.id, []byte(msg.Data))
 		if !*enableAudit {
 			return copy(p, msg.Data), nil
 		}
@@ -149,23 +148,23 @@ func handleTerminalSession(session sockjs.Session) {
 	)
 
 	if buf, err = session.Recv(); err != nil {
-		logger.Error("handleTerminalSession: can't Recv: %v", err)
+		clog.Error("handleTerminalSession: can't Recv: %v", err)
 		return
 	}
 
 	if err = json.Unmarshal([]byte(buf), &msg); err != nil {
-		logger.Error("handleTerminalSession: can't UnMarshal (%v): %s", err, buf)
+		clog.Error("handleTerminalSession: can't UnMarshal (%v): %s", err, buf)
 		return
 	}
 
 	if msg.Op != "bind" {
-		logger.Error("handleTerminalSession: expected 'bind' message, got: %s", buf)
+		clog.Error("handleTerminalSession: expected 'bind' message, got: %s", buf)
 		return
 	}
 
 	restClient, cfg, info, err := getConfigs(msg.SessionID)
 	if err != nil {
-		logger.Error("get rest client failed. Error msg: " + err.Error())
+		clog.Error("get rest client failed. Error msg: " + err.Error())
 		return
 	}
 
@@ -177,9 +176,9 @@ func handleTerminalSession(session sockjs.Session) {
 		cInfo:         info,
 	}
 
-	logger.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s", info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
+	clog.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s", info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
 	if err = connectToContainer(restClient, cfg, info, terminalSession); err != nil {
-		logger.Error("connect to container failed, session id: %v , error message: %v", msg.SessionID, err.Error())
+		clog.Error("connect to container failed, session id: %v , error message: %v", msg.SessionID, err.Error())
 		terminalSession.Close(2, err.Error())
 		return
 	}
@@ -198,14 +197,14 @@ func getConfigs(sessionID string) (*rest.RESTClient, *rest.Config, *ConnInfo, er
 
 	err = json.Unmarshal([]byte(val), &info)
 	if err != nil {
-		logger.Error("unmarshal container-connect info from failed, key: %v, value: %v, error: %v", sessionID, val, err)
+		clog.Error("unmarshal container-connect info from failed, key: %v, value: %v, error: %v", sessionID, val, err)
 		return nil, nil, nil, err
 	}
 
 	v, err = getNonControlCfg(info.ClusterName)
 
 	if err != nil {
-		logger.Error("failed to fetch rest.config for cluster [%s], msg: %v", info.ClusterName, err)
+		clog.Error("failed to fetch rest.config for cluster [%s], msg: %v", info.ClusterName, err)
 		return nil, nil, nil, err
 	}
 
@@ -213,7 +212,7 @@ func getConfigs(sessionID string) (*rest.RESTClient, *rest.Config, *ConnInfo, er
 
 	restClient, err := rest.RESTClientFor(cfg)
 	if err != nil {
-		logger.Error("get rest client failed. Error msg: " + err.Error())
+		clog.Error("get rest client failed. Error msg: " + err.Error())
 		return nil, nil, nil, err
 	}
 	return restClient, cfg, info, nil
@@ -291,10 +290,10 @@ func connectToContainer(k8sClient *rest.RESTClient, cfg *rest.Config, info *Conn
 		req = req.VersionedParams(&v1.PodExecOptions{
 			Command: cmds,
 		}, scheme.ParameterCodec)
-		logger.Info("try to connect to container with cmds: %v", cmds)
+		clog.Info("try to connect to container with cmds: %v", cmds)
 		shErr := postReq(req, cfg, ptyHandler)
 		if shErr != nil {
-			logger.Error("connect to pod %v failed, %v", podName, err)
+			clog.Error("connect to pod %v failed, %v", podName, err)
 			return shErr
 		}
 	}
@@ -304,7 +303,7 @@ func connectToContainer(k8sClient *rest.RESTClient, cfg *rest.Config, info *Conn
 func postReq(req *rest.Request, cfg *rest.Config, ptyHandler PtyHandler) error {
 	exec, err := remotecommand.NewSPDYExecutor(cfg, "POST", req.URL())
 	if err != nil {
-		logger.Error("new SPDY executor failed, %v", err)
+		clog.Error("new SPDY executor failed, %v", err)
 		return err
 	}
 
@@ -340,7 +339,7 @@ func buildCMD(info *ConnInfo) []string {
 		cmds = []string{"/bin/bash"}
 	}
 
-	logger.Info("try to connect to container with cmds: %v", cmds)
+	clog.Info("try to connect to container with cmds: %v", cmds)
 
 	return cmds
 }

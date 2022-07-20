@@ -18,13 +18,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
+	consolelog "kubecube-webconsole/clog"
 	"net/http"
 	"os"
 	"time"
 
-	logger "github.com/astaxie/beego/logs"
-	"github.com/golang/glog"
 	"github.com/kubecube-io/kubecube/pkg/clients"
 	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/client-go/kubernetes"
@@ -40,21 +40,21 @@ import (
 var leader = false
 
 func init() {
+	flag.Parse()
 	clients.InitCubeClientSetWithOpts(nil)
+	clog.InitCubeLoggerWithOpts(consolelog.NewLogConfig())
 }
 
 func main() {
-
-	clog.InitCubeLoggerWithOpts(&clog.Config{LogLevel: "info", StacktraceLevel: "error"})
 	// hostname is the key to select the master, so it must be terminated if it fails
 	hostname, err := os.Hostname()
 	if err != nil {
-		glog.Fatalf("failed to get hostname: %v", err)
+		clog.Fatal("failed to get hostname: %v", err)
 	}
 
 	client, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
 	if err != nil {
-		logger.Error("problem new raw k8s clientSet: %v", err)
+		clog.Error("problem new raw k8s clientSet: %v", err)
 		return
 	}
 
@@ -68,7 +68,7 @@ func main() {
 			Identity: hostname,
 		})
 	if err != nil {
-		glog.Errorf("error creating lock: %v", err)
+		clog.Error("error creating lock: %v", err)
 	}
 
 	le, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
@@ -82,12 +82,12 @@ func main() {
 			},
 			OnStoppedLeading: func() {
 				leader = false
-				glog.Infoln("leader election lost")
+				clog.Info("leader election lost")
 			},
 		},
 	})
 	if err != nil {
-		glog.Errorf("leader election fail, be member")
+		clog.Error("leader election fail, be member")
 	}
 	le.Run(context.Background())
 }
@@ -95,7 +95,7 @@ func main() {
 func runAPIServer() {
 	// provide api for livenessProbe
 	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
-		logger.Debug("Health check")
+		clog.Debug("Health check")
 		response.WriteHeader(http.StatusOK)
 	})
 	http.Handle("/api/", handler.CreateHTTPAPIHandler())
@@ -112,7 +112,7 @@ func runAPIServer() {
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
 		if err != nil {
-			logger.Critical("ListenAndServe failed，error msg: %s", err.Error())
+			clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
 		}
 	}()
 }

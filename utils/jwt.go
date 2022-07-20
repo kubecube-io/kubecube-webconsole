@@ -17,8 +17,8 @@ limitations under the License.
 package utils
 
 import (
-	logger "github.com/astaxie/beego/logs"
 	"github.com/golang-jwt/jwt"
+	"github.com/kubecube-io/kubecube/pkg/clog"
 	"k8s.io/api/authentication/v1beta1"
 )
 
@@ -40,7 +40,7 @@ func ParseToken(token string) *Claims {
 		return []byte(jwtSecret), nil
 	})
 	if err != nil {
-		logger.Error("parse token error: %s", err)
+		clog.Error("parse token error: %s", err)
 		return nil
 	}
 	if claims, ok := newToken.Claims.(*Claims); ok && newToken.Valid {
