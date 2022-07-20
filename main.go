@@ -49,7 +49,7 @@ func main() {
 	// hostname is the key to select the master, so it must be terminated if it fails
 	hostname, err := os.Hostname()
 	if err != nil {
-		panic(err)
+		clog.Fatal("failed to get hostname: %v", err)
 	}
 
 	client, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
@@ -112,8 +112,7 @@ func runAPIServer() {
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
 		if err != nil {
-			clog.Error("ListenAndServe failed，error msg: %s", err.Error())
-			panic(err)
+			clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
 		}
 	}()
 }
