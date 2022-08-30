@@ -1,3 +1,10 @@
+# v1.2.4
+2022-8-31
+## Bugfix:
+- add cluster info when request to kubecube for pod authorization
+## Dependency:
+- kubecube 1.4.0
+
 # v1.2.3
 2022-7-19
 ## Enhance:
