@@ -32,6 +32,7 @@ const (
 	LeaderElectionKey       = "kubecube-webconsole-leader-election-key"
 	LeaderElectionNamespace = "kube-system"
 	NamespaceKey            = "namespace"
+	ClusterKey              = "cluster"
 	KubeCubeChrootShPath    = "/kubecube-chroot.sh"
 	CloudShellLabelKey      = "kubecube.io/app"
 )

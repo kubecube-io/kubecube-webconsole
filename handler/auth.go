@@ -47,6 +47,7 @@ type attributes struct {
 	Name            string `json:"name"`
 	ResourceRequest bool   `json:"resourceRequest"`
 	Path            string `json:"path"`
+	Cluster         string `json:"cluster"`
 }
 
 // podAuthorityVerify verify whether current user could access to pod
@@ -76,8 +77,15 @@ func isAuthValid(request *restful.Request) bool {
 		return false
 	}
 	namespace := request.PathParameter(NamespaceKey)
-	attribute := &attributes{user, "get", namespace, "", "", "pods",
-		"", "", true, ""}
+	cluster := request.PathParameter(ClusterKey)
+	attribute := &attributes{
+		User:            user,
+		Verb:            "get",
+		Namespace:       namespace,
+		Resource:        "pods",
+		ResourceRequest: true,
+		Cluster:         cluster,
+	}
 	bytesData, err := json.Marshal(attribute)
 	if err != nil {
 		clog.Error("marshal json error: %s", err)
