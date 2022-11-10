@@ -96,7 +96,7 @@ func isAuthValid(request *restful.Request) bool {
 		Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
 		Timeout:   5 * time.Second,
 	}
-	resp, err := c.Post("https://"+utils.GetKubeCubeSvc()+"/api/v1/cube/authorization/access",
+	resp, err := c.Post(utils.GetKubeCubeSvc()+"/api/v1/cube/authorization/access",
 		"application/json", strings.NewReader(string(bytesData)))
 	if err != nil {
 		clog.Error(err.Error())
