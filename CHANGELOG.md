@@ -1,3 +1,10 @@
+# v1.2.6
+2022-12-29
+## Bugfix:
+- fix choudshell using vim when type ↑↓←→ 
+## Dependency:
+- kubecube 1.4.0
+
 # v1.2.4
 2022-8-31
 ## Bugfix:
