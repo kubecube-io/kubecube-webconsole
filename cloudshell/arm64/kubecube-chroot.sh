@@ -91,3 +91,6 @@ fi
 chown $USERNAME:$USERNAME {$DIR,$DIR/tmp,$DIR/var,$DIR/root}
 
 chroot --userspec=$USERNAME:$USERNAME $DIR /bin/bash
+
+echo "set nocp" >> $DIR/root/.vimrc
+source $DIR/root/.vimrc
