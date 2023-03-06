@@ -121,7 +121,7 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 
 	// save container-connect info to memory
 	connMap.Store(sessionId, string(connInfoBytes))
-	response.WriteHeaderAndEntity(http.StatusOK, TerminalResponse{Id: sessionId})
+	_ = response.WriteHeaderAndEntity(http.StatusOK, TerminalResponse{Id: sessionId})
 }
 
 func fetchRandomRunningPod(podArr []v12.Pod) *v12.Pod {
