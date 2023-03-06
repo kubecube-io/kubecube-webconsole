@@ -59,13 +59,13 @@ func PodAuthorityVerify(request *restful.Request, response *restful.Response, ch
 	// 2. determine whether the operated pod belongs to the namespace
 	if !isAuthValid(request) {
 		clog.Info("user has no permission to operate the pod or the pod does not belong to the namespace")
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
+		_ = response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "permission denied"})
 		return
 	}
 	if isNsOrPodBelongToNamespace(request) {
 		chain.ProcessFilter(request, response)
 	} else {
-		response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "the pod is not found"})
+		_ = response.WriteHeaderAndEntity(http.StatusUnauthorized, TerminalResponse{Message: "the pod is not found"})
 	}
 }
 
@@ -122,8 +122,11 @@ func isNsOrPodBelongToNamespace(request *restful.Request) bool {
 	clusterName := request.PathParameter("cluster")
 	pivotClient := clients.Interface().Kubernetes(constants.LocalCluster)
 	memberCluster := v1.Cluster{}
-	pivotClient.Cache().Get(request.Request.Context(), types.NamespacedName{Name: clusterName}, &memberCluster)
-
+	err := pivotClient.Cache().Get(request.Request.Context(), types.NamespacedName{Name: clusterName}, &memberCluster)
+	if err != nil {
+		clog.Error("get cluster list error: %s", err)
+		return false
+	}
 	config := memberCluster.Spec.KubeConfig
 	kubeConfig, err := kubeconfig.LoadKubeConfigFromBytes(config)
 	if err != nil {

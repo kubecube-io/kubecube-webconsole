@@ -38,6 +38,11 @@ func handleCloudShellExec(request *restful.Request, response *restful.Response) 
 	// check cluster exists
 	clusterName := request.PathParameter("cluster")
 	clusterInfo, err := GetClusterInfoByName(clusterName)
+	if err != nil {
+		clog.Warn("get cluster failed. Error msg: " + err.Error())
+		errdef.HandleInternalError(response, err)
+		return
+	}
 	ctrlCluster, err := GetPivotCluster()
 	if err != nil {
 		clog.Error("get pivot cluster failed. Error msg: " + err.Error())

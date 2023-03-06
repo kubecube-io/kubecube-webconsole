@@ -57,7 +57,7 @@ func GetPivotCluster() (*clusterv1.Cluster, error) {
 	}
 
 	for _, cluster := range list.Items {
-		if cluster.Spec.IsMemberCluster == false {
+		if !cluster.Spec.IsMemberCluster {
 			pivotCluster = &cluster
 			clog.Info("found pivot cluster %v", pivotCluster.Name)
 			return pivotCluster, nil

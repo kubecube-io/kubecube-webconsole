@@ -115,7 +115,7 @@ func handleExecShell(request *restful.Request, response *restful.Response) {
 	}
 	cacheConnInfo(sessionId, cInfo)
 
-	response.WriteHeaderAndEntity(http.StatusOK, TerminalResponse{Id: sessionId})
+	_ = response.WriteHeaderAndEntity(http.StatusOK, TerminalResponse{Id: sessionId})
 }
 
 func cacheConnInfo(sessionId string, info *ConnInfo) {

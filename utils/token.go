@@ -50,7 +50,7 @@ func GetTokenFromReq(request *restful.Request) string {
 
 	// parse bearer token
 	parts := strings.Split(bearerToken, string(bearerToken[6]))
-	if len(parts) < 2 || strings.ToLower(parts[0]) != strings.ToLower(bearerTokenPrefix) {
+	if len(parts) < 2 || !strings.EqualFold(parts[0], bearerTokenPrefix) {
 		return ""
 	}
 	return parts[1]
