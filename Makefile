@@ -36,3 +36,17 @@ docker-build-webconsole:  #test ## Build docker image with the manager.
 docker-build-webconsole-multi-arch:  #test
 	MULTI_ARCH=true
 	docker buildx build -f ./Dockerfile -t ${IMG} --platform=linux/arm,linux/arm64,linux/amd64 . --push
+
+lint: golangci-lint ## Run golangci-lint
+	$(GOLANGCI-LINT) run --timeout=10m
+
+GOLANGCI-LINT = ./bin/golangci-lint
+golangci-lint: ## Download golangci-lint locally if necessary.
+	$(call get-golangci-lint,$(GOLANGCI-LINT))
+
+define get-golangci-lint
+@[ -f $(1) ] || { \
+set -e ;\
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.45.2 ;\
+}
+endef

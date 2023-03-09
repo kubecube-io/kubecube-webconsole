@@ -34,12 +34,12 @@ func HandleInternalError(response *restful.Response, err error) {
 		statusCode = int(statusError.Status().Code)
 	}
 	response.AddHeader("Content-Type", "text/plain")
-	response.WriteErrorString(statusCode, err.Error()+"\n")
+	_ = response.WriteErrorString(statusCode, err.Error()+"\n")
 }
 
 func HandleInternalErrorByCode(response *restful.Response, errCode ErrorInfo) {
 	clog.Error("%v", errCode)
 	response.AddHeader("Content-Type", "text/plain")
 	msg, _ := json.Marshal(errCode)
-	response.WriteErrorString(errCode.Code, string(msg))
+	_ = response.WriteErrorString(errCode.Code, string(msg))
 }
