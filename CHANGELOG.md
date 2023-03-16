@@ -1,3 +1,10 @@
+# v1.3.0
+2023-03-16
+## Feature
+- Feature sonar[#39](https://github.com/kubecube-io/kubecube-webconsole/pull/39)
+## Dependency:
+- kubecube 1.4.0
+
 # v1.2.6
 2022-12-29
 ## Bugfix:
