@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/astaxie/beego v1.12.3
-	github.com/emicklei/go-restful v2.15.0+incompatible
+	github.com/emicklei/go-restful v2.16.0+incompatible
 	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/kubecube-io/kubecube v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
