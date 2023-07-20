@@ -18,8 +18,10 @@ require (
 )
 
 replace (
-	// we must controll pkg version manually see issues: https://github.com/kubernetes/client-go/issues/874
 	github.com/go-logr/logr => github.com/go-logr/logr v0.4.0
+	// we must controll pkg version manually see issues: https://github.com/kubernetes/client-go/issues/874
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.11.1
+	golang.org/x/text => golang.org/x/text v0.3.8
 	k8s.io/api => k8s.io/api v0.20.6
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.20.6
 	k8s.io/apimachinery => k8s.io/apimachinery v0.20.6
