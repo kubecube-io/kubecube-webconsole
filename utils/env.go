@@ -29,3 +29,11 @@ func GetKubeCubeSvc() string {
 func getJwtSecret() string {
 	return os.Getenv("JWT_SECRET")
 }
+
+func EnablePprof() bool {
+	v := os.Getenv("ENABLE_PPROF")
+	if v == "" {
+		return false
+	}
+	return v == "true"
+}

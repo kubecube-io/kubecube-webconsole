@@ -1,3 +1,10 @@
+# v1.3.1
+2023-09-05
+## Feature
+- add switch for pprof [#46](https://github.com/kubecube-io/kubecube-webconsole/pull/39)
+## Dependency:
+- kubecube 1.4.0+
+
 # v1.3.0
 2023-03-16
 ## Feature

@@ -20,7 +20,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	consolelog "kubecube-webconsole/clog"
 	"net/http"
 	"os"
 	"time"
@@ -30,10 +29,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
+	consolelog "kubecube-webconsole/clog"
+	"kubecube-webconsole/handler"
+	"kubecube-webconsole/utils"
 	_ "net/http/pprof"
 	ctrl "sigs.k8s.io/controller-runtime"
-
-	"kubecube-webconsole/handler"
 )
 
 // leader flag
@@ -109,10 +109,12 @@ func runAPIServer() {
 		response.WriteHeader(statusCode)
 	})
 
-	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
-		if err != nil {
-			clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
-		}
-	}()
+	if utils.EnablePprof() {
+		go func() {
+			err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
+			if err != nil {
+				clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
+			}
+		}()
+	}
 }
