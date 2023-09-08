@@ -93,16 +93,16 @@ func main() {
 }
 
 func runAPIServer() {
-	mux := http.NewServeMux()
+	webconsoleServer := http.NewServeMux()
 	// provide api for livenessProbe
-	mux.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
+	webconsoleServer.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
 		clog.Debug("Health check")
 		response.WriteHeader(http.StatusOK)
 	})
-	mux.Handle("/api/", handler.CreateHTTPAPIHandler())
-	mux.Handle("/api/sockjs/", handler.CreateAttachHandler("/api/sockjs"))
+	webconsoleServer.Handle("/api/", handler.CreateHTTPAPIHandler())
+	webconsoleServer.Handle("/api/sockjs/", handler.CreateAttachHandler("/api/sockjs"))
 	// provide api for readinessProbe，avoid service flow into in-leader pod
-	mux.HandleFunc("/leader", func(response http.ResponseWriter, request *http.Request) {
+	webconsoleServer.HandleFunc("/leader", func(response http.ResponseWriter, request *http.Request) {
 		statusCode := http.StatusOK
 		if !leader {
 			statusCode = http.StatusBadRequest
@@ -113,11 +113,11 @@ func runAPIServer() {
 	go func() {
 		ser := http.Server{
 			Addr:    fmt.Sprintf(":%d", *handler.ServerPort),
-			Handler: mux,
+			Handler: webconsoleServer,
 		}
 		err := ser.ListenAndServe()
 		if err != nil {
-			clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
+			clog.Fatal("start webconsoleServer failed，error msg: %s", err.Error())
 		}
 	}()
 
