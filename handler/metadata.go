@@ -85,6 +85,7 @@ var (
 )
 
 var (
+	PprofPort         = flag.Int("pprotPort", 9090, "pprot port")
 	ServerPort        = flag.Int("serverPort", 9081, "set server port")
 	scriptName        = flag.String("scriptName", "/init.sh", "script name with full path in container")
 	cloudShellDpName  = flag.String("cloudShellDpName", "kubecube-cloud-shell", "deployment run on control cluster for cloud shell, for example,'kubecube-cloud-shell'")

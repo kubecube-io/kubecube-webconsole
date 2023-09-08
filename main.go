@@ -93,15 +93,16 @@ func main() {
 }
 
 func runAPIServer() {
+	mux := http.NewServeMux()
 	// provide api for livenessProbe
-	http.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
+	mux.HandleFunc("/healthz", func(response http.ResponseWriter, request *http.Request) {
 		clog.Debug("Health check")
 		response.WriteHeader(http.StatusOK)
 	})
-	http.Handle("/api/", handler.CreateHTTPAPIHandler())
-	http.Handle("/api/sockjs/", handler.CreateAttachHandler("/api/sockjs"))
+	mux.Handle("/api/", handler.CreateHTTPAPIHandler())
+	mux.Handle("/api/sockjs/", handler.CreateAttachHandler("/api/sockjs"))
 	// provide api for readinessProbe，avoid service flow into in-leader pod
-	http.HandleFunc("/leader", func(response http.ResponseWriter, request *http.Request) {
+	mux.HandleFunc("/leader", func(response http.ResponseWriter, request *http.Request) {
 		statusCode := http.StatusOK
 		if !leader {
 			statusCode = http.StatusBadRequest
@@ -109,11 +110,22 @@ func runAPIServer() {
 		response.WriteHeader(statusCode)
 	})
 
+	go func() {
+		ser := http.Server{
+			Addr:    fmt.Sprintf(":%d", *handler.ServerPort),
+			Handler: mux,
+		}
+		err := ser.ListenAndServe()
+		if err != nil {
+			clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
+		}
+	}()
+
 	if utils.EnablePprof() {
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
+			err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.PprofPort), nil)
 			if err != nil {
-				clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
+				clog.Fatal("start pprof failed，error msg: %s", err.Error())
 			}
 		}()
 	}
