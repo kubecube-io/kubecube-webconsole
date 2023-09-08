@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"time"
 
@@ -32,7 +33,6 @@ import (
 	consolelog "kubecube-webconsole/clog"
 	"kubecube-webconsole/handler"
 	"kubecube-webconsole/utils"
-	_ "net/http/pprof"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -110,11 +110,17 @@ func runAPIServer() {
 	})
 
 	if utils.EnablePprof() {
-		go func() {
-			err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
-			if err != nil {
-				clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
-			}
-		}()
+		http.HandleFunc("/debug/pprof/", pprof.Index)
+		http.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		http.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		http.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
+
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%d", *handler.ServerPort), nil)
+		if err != nil {
+			clog.Fatal("ListenAndServe failed，error msg: %s", err.Error())
+		}
+	}()
 }
