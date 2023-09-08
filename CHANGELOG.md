@@ -1,7 +1,7 @@
 # v1.3.1
-2023-09-05
+2023-09-08
 ## Feature
-- add switch for pprof [#46](https://github.com/kubecube-io/kubecube-webconsole/pull/39)
+- add switch for pprof [#46](https://github.com/kubecube-io/kubecube-webconsole/pull/39),[#47](https://github.com/kubecube-io/kubecube-webconsole/pull/47)
 ## Dependency:
 - kubecube 1.4.0+
 
