@@ -1,3 +1,10 @@
+# v1.3.2
+2023-09-08
+## Feature
+- add pprof port [#47](https://github.com/kubecube-io/kubecube-webconsole/pull/47)
+## Dependency:
+- kubecube 1.4.0+
+
 # v1.3.1
 2023-09-05
 ## Feature
