@@ -56,6 +56,7 @@ func (t TerminalSession) Read(p []byte) (int, error) {
 	if err := json.Unmarshal([]byte(m), &msg); err != nil {
 		return 0, err
 	}
+	clog.Info("[%v] stdin msg.Data content : %v", t.id, len(msg.Data))
 
 	switch msg.Op {
 	case "stdin":
@@ -147,35 +148,40 @@ func handleTerminalSession(session sockjs.Session) {
 		terminalSession TerminalSession
 	)
 
+	terminalSession = TerminalSession{
+		id:            msg.SessionID,
+		sockJSSession: session,
+		sizeChan:      make(chan remotecommand.TerminalSize),
+		stdinBuffer:   bytes.NewBufferString(""),
+		cInfo:         nil,
+	}
+
 	if buf, err = session.Recv(); err != nil {
 		clog.Error("handleTerminalSession: can't Recv: %v", err)
+		terminalSession.Close(2, fmt.Sprintf("handleTerminalSession: can't Recv: %v", err))
 		return
 	}
 
 	if err = json.Unmarshal([]byte(buf), &msg); err != nil {
 		clog.Error("handleTerminalSession: can't UnMarshal (%v): %s", err, buf)
+		terminalSession.Close(2, fmt.Sprintf("handleTerminalSession: can't Recv: %v", err))
 		return
 	}
 
 	if msg.Op != "bind" {
 		clog.Error("handleTerminalSession: expected 'bind' message, got: %s", buf)
+		terminalSession.Close(2, fmt.Sprintf("handleTerminalSession: expected 'bind' message, got: %s", buf))
 		return
 	}
 
 	restClient, cfg, info, err := getConfigs(msg.SessionID)
 	if err != nil {
 		clog.Error("get rest client failed. Error msg: " + err.Error())
+		terminalSession.Close(2, fmt.Sprintf("get rest client failed. Error msg: "+err.Error()))
 		return
 	}
 
-	terminalSession = TerminalSession{
-		id:            msg.SessionID,
-		sockJSSession: session,
-		sizeChan:      make(chan remotecommand.TerminalSize),
-		stdinBuffer:   bytes.NewBufferString(""),
-		cInfo:         info,
-	}
-
+	terminalSession.cInfo = info
 	clog.Info("connect to container with cluster: %s, namespace: %s, pod name: %s, container name: %s, session id: %s", info.ClusterName, info.Namespace, info.PodName, info.ContainerName, msg.SessionID)
 	if err = connectToContainer(restClient, cfg, info, terminalSession); err != nil {
 		clog.Error("connect to container failed, session id: %v , error message: %v", msg.SessionID, err.Error())
@@ -191,10 +197,11 @@ func getConfigs(sessionID string) (*rest.RESTClient, *rest.Config, *ConnInfo, er
 	var info *ConnInfo
 
 	v, ok := connMap.Load(sessionID)
-	if ok {
-		val = v.(string)
+	if !ok {
+		return nil, nil, nil, fmt.Errorf("session id not found: %s", sessionID)
 	}
 
+	val = v.(string)
 	err = json.Unmarshal([]byte(val), &info)
 	if err != nil {
 		clog.Error("unmarshal container-connect info from failed, key: %v, value: %v, error: %v", sessionID, val, err)
