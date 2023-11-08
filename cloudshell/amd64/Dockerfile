@@ -3,6 +3,6 @@
 # that can be found in the LICENSE file.
 
 FROM harbor.cloud.netease.com/qztest/kubecube/ubuntu:remove-ssh-for-cloudshell-multi
-COPY ./amd64/kubecube-chroot.sh /kubecube-chroot.sh
-COPY ./amd64/kubectl /bin/kubectl
+COPY kubecube-chroot.sh /kubecube-chroot.sh
+COPY kubectl /bin/kubectl
 RUN chmod +x /kubecube-chroot.sh
