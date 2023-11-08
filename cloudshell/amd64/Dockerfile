@@ -2,7 +2,7 @@
 # Use of this source code is governed by a Apache license
 # that can be found in the LICENSE file.
 
-FROM hub.c.163.com/kubecube/ubuntu:16.04-tools
+FROM harbor.cloud.netease.com/qztest/kubecube/ubuntu:remove-ssh-for-cloudshell-multi
 COPY ./amd64/kubecube-chroot.sh /kubecube-chroot.sh
 COPY ./amd64/kubectl /bin/kubectl
 RUN chmod +x /kubecube-chroot.sh
