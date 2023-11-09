@@ -2,7 +2,15 @@
 # Use of this source code is governed by a Apache license
 # that can be found in the LICENSE file.
 
-FROM harbor.cloud.netease.com/qztest/kubecube/ubuntu:remove-ssh-for-cloudshell-multi
+FROM ubuntu:16.04
+
+RUN apt-get update \
+    && apt-get update && apt-get install -y vim tar wget curl rsync bzip2 iptables tcpdump less telnet net-tools lsof sysstat cron supervisor inetutils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ./cloudshell/amd64/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./cloudshell/amd64/kubecube-chroot.sh /kubecube-chroot.sh
 COPY ./cloudshell/amd64/kubectl /bin/kubectl
 RUN chmod +x /kubecube-chroot.sh
+
+CMD ["/usr/bin/supervisord"]
