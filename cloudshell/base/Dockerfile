@@ -8,4 +8,5 @@ RUN apt-get update \
     && apt-get update && apt-get install -y vim tar wget curl rsync bzip2 iptables tcpdump less telnet net-tools lsof sysstat cron supervisor inetutils-ping \
     && rm -rf /var/lib/apt/lists/*
 #RUN cp -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+COPY ./cloudshell/base/sshd.conf /etc/supervisor/conf.d/sshd.conf
 CMD ["/usr/bin/supervisord"]
