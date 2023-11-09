@@ -2,7 +2,7 @@
 # Use of this source code is governed by a Apache license
 # that can be found in the LICENSE file.
 
-FROM ubuntu:16.04
+FROM hub.c.163.com/kubecube/ubuntu:16.04
 
 RUN apt-get update \
     && apt-get update && apt-get install -y vim tar wget curl rsync bzip2 iptables tcpdump less telnet net-tools lsof sysstat cron supervisor inetutils-ping \
