@@ -1,3 +1,10 @@
+# v1.2.7
+
+## Bugfix:
+- Remove ssh for cloudshell
+## Dependency:
+- kubecube 1.4.0
+
 # v1.2.6
 2022-12-29
 ## Bugfix:
